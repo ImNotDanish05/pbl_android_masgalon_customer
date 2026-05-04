@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import '../constants/app_colors.dart';
-import 'login_input_field.dart';
+import 'input_field.dart';
 
 class LoginForm extends StatefulWidget {
   final GlobalKey<FormState> formKey;
