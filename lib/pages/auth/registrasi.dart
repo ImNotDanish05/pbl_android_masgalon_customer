@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
-import '../constants/app_colors.dart';
-import '../widgets/header.dart';
-import '../widgets/bottom_navbar.dart';
+import '../../core/constants/app_colors.dart';
+import '../../widgets/header.dart';
+import '../../widgets/bottom_navbar.dart';
 // JANGAN LUPA IMPORT INI:
-import '../widgets/form.dart';
+import '../../widgets/form.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});

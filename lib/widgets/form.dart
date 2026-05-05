@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
-import '../constants/app_colors.dart';
+import '../core/constants/app_colors.dart';
 import 'input_field.dart';
 
 class LoginForm extends StatefulWidget {
@@ -61,7 +61,7 @@ class _LoginFormState extends State<LoginForm> {
             controller: widget.passwordController,
             obscureText: _obscurePassword,
             labelTrailing: GestureDetector(
-              onTap: () {},
+              onTap: () => Navigator.pushNamed(context, '/forgot-password'),
               child: const Text(
                 'Lupa Password?',
                 style: TextStyle(

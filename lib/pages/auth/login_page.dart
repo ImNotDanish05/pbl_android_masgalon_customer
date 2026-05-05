@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
-import '../constants/app_colors.dart';
-import '../widgets/header.dart';
-import '../widgets/login_welcome_section.dart';
-import '../widgets/form.dart';
-import '../widgets/bottom_navbar.dart';
+import '../../core/constants/app_colors.dart';
+import '../../widgets/header.dart';
+import '../../widgets/login_welcome_section.dart';
+import '../../widgets/form.dart';
+import '../../widgets/bottom_navbar.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

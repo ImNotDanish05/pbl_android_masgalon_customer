@@ -8,4 +8,5 @@ class AppColors {
   static const Color borderColor = Color(0xFFD1D5DB);
   static const Color textDark = Color(0xFF111827);
   static const Color dividerColor = Color(0xFFE8EDF5);
+  static const Color darkBlue = Color(0xFF0D52A1);
 }
