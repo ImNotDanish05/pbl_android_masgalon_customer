@@ -6,7 +6,7 @@ import 'pages/auth/token_verifikasi.dart';
 import 'pages/auth/ganti_password.dart';
 import 'pages/auth/success_screen.dart';
 import 'pages/home/home_page.dart';
-
+import 'pages/orders/checkout_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,6 +29,7 @@ class MyApp extends StatelessWidget {
         '/change-password': (context) => const ResetPasswordScreen(),
         '/success': (context) => const SuccessScreen(),
         '/home': (context) => const HomePage(),
+        '/checkout': (context) => const CheckoutPage(),
       },
     );
   }

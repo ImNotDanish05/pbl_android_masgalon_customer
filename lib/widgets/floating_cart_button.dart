@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
+import '../pages/orders/checkout_page.dart';
 
 class FloatingCartButton extends StatelessWidget {
   final int itemCount;
@@ -10,7 +11,12 @@ class FloatingCartButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // TODO: Navigate to cart page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CheckoutPage(),
+          ),
+        );
       },
       child: Stack(
         clipBehavior: Clip.none,
