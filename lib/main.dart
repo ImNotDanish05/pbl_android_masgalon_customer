@@ -5,6 +5,8 @@ import 'pages/auth/lupa_password.dart';
 import 'pages/auth/token_verifikasi.dart';
 import 'pages/auth/ganti_password.dart';
 import 'pages/auth/success_screen.dart';
+import 'pages/home/home_page.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -26,6 +28,7 @@ class MyApp extends StatelessWidget {
         '/token-verification': (context) => const TokenVerificationScreen(),
         '/change-password': (context) => const ResetPasswordScreen(),
         '/success': (context) => const SuccessScreen(),
+        '/home': (context) => const HomePage(),
       },
     );
   }
