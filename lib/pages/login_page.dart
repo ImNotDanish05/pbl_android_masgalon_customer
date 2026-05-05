@@ -4,7 +4,6 @@ import '../constants/app_colors.dart';
 import '../widgets/header.dart';
 import '../widgets/login_welcome_section.dart';
 import '../widgets/form.dart';
-import '../widgets/gallon_illustration.dart';
 import '../widgets/bottom_navbar.dart';
 
 class LoginPage extends StatefulWidget {
@@ -72,7 +71,6 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 20),
                     _buildSignUpRow(),
                     const SizedBox(height: 40),
-                    const GallonIllustration(),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -80,8 +78,13 @@ class _LoginPageState extends State<LoginPage> {
             ),
             LoginBottomNavBar(
               selectedIndex: _selectedTabIndex,
-              onTabChanged: (index) =>
-                  setState(() => _selectedTabIndex = index),
+              onTabChanged: (index) {
+                if (index == 1) {
+                  Navigator.pushReplacementNamed(context, '/register');
+                } else {
+                  setState(() => _selectedTabIndex = index);
+                }
+              },
             ),
           ],
         ),
@@ -98,9 +101,7 @@ class _LoginPageState extends State<LoginPage> {
           style: TextStyle(fontSize: 14, color: AppColors.textGrey),
         ),
         GestureDetector(
-          onTap: () {
-            // Navigate to register page
-          },
+          onTap: () => Navigator.pushReplacementNamed(context, '/register'),
           child: const Text(
             'Daftar',
             style: TextStyle(
