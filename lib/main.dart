@@ -1,12 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pages/auth/login_page.dart';
-import 'pages/auth/registrasi.dart';
-import 'pages/auth/lupa_password.dart';
-import 'pages/auth/token_verifikasi.dart';
-import 'pages/auth/ganti_password.dart';
-import 'pages/auth/success_screen.dart';
-import 'pages/home/home_page.dart';
-
+import 'route/routes.dart'; 
 
 void main() {
   runApp(const MyApp());
@@ -17,19 +10,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // Ubah dari MaterialApp menjadi MaterialApp.router
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Mas Galon',
-      initialRoute: '/login',
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const RegisterPage(),
-        '/forgot-password': (context) => const ForgotPasswordScreen(),
-        '/token-verification': (context) => const TokenVerificationScreen(),
-        '/change-password': (context) => const ResetPasswordScreen(),
-        '/success': (context) => const SuccessScreen(),
-        '/home': (context) => const HomePage(),
-      },
+      
+      routerConfig: AppRouter.router, 
     );
   }
 }
