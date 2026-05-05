@@ -16,9 +16,7 @@ class LoginBottomNavBar extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(color: AppColors.dividerColor),
-        ),
+        border: Border(top: BorderSide(color: AppColors.dividerColor)),
       ),
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -71,8 +69,7 @@ class _NavItem extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight:
-                    isSelected ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: color,
               ),
             ),
