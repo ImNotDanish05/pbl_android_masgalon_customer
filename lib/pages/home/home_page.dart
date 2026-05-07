@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../data/dummy_data.dart';
-import '../../widgets/home_app_bar.dart';
+import '../../widgets/main_head_bar.dart';
 import '../../widgets/home_search_bar.dart';
 import '../../widgets/saldo_card.dart';
 import '../../widgets/reward_card.dart';
@@ -24,7 +25,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: const HomeAppBar(),
+      appBar: const MainAppBar(),
       body: Stack(
         children: [
           // Scrollable content
@@ -33,9 +34,14 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const HomeSearchBar(),
+                HomeSearchBar(hintText: 'Cari galon atau gas...'),
                 const SizedBox(height: 16),
-                SaldoCard(saldo: DummyData.saldoAbunemen),
+                SaldoCard(
+                  saldo: DummyData.saldoAbunemen,
+                  onTopUpTap: () {
+                    print("Cihuyy, tombol isi saldo ditekan!");
+                  },
+                ),
                 const SizedBox(height: 14),
                 RewardCard(
                   points: DummyData.pointRewards,
@@ -64,7 +70,15 @@ class _HomePageState extends State<HomePage> {
       ),
       bottomNavigationBar: MainBottomNavBar(
         currentIndex: _currentNavIndex,
-        onTap: (index) => setState(() => _currentNavIndex = index),
+        onTap: (index) {
+          if (index == 0) {
+            setState(() => _currentNavIndex = index);
+          } else if (index == 1) {
+            context.go('/orders');
+          } else {
+            setState(() => _currentNavIndex = index);
+          }
+        },
       ),
     );
   }

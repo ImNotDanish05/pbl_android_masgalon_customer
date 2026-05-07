@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 
-class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const HomeAppBar({super.key});
+class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const MainAppBar({super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -27,12 +27,12 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
       ),
-      // actions: [
-      //   IconButton(
-      //     icon: const Icon(Icons.notifications_outlined, color: Colors.black87),
-      //     onPressed: () {},
-      //   ),
-      // ],
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined, color: Colors.black87),
+          onPressed: () {},
+        ),
+      ],
     );
   }
 }

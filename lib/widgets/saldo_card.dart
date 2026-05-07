@@ -4,10 +4,17 @@ import '../core/constants/app_colors.dart';
 
 class SaldoCard extends StatelessWidget {
   final int saldo;
+  // 1. Tambahkan parameter fungsi ini
+  final VoidCallback onTopUpTap; 
 
-  const SaldoCard({super.key, required this.saldo});
+  const SaldoCard({
+    super.key, 
+    required this.saldo,
+    required this.onTopUpTap, // 2. Wajibkan parameter ini di constructor
+  });
 
   String _formatRupiah(int value) {
+    // ... (kode format rupiahmu tetap sama)
     final str = value.toString();
     final buffer = StringBuffer();
     int count = 0;
@@ -52,8 +59,10 @@ class SaldoCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
+                
+                // INI BAGIAN TOMBOLNYA
                 GestureDetector(
-                  onTap: () {},
+                  onTap: onTopUpTap, 
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -69,8 +78,7 @@ class SaldoCard extends StatelessWidget {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.add_circle_outline,
-                            color: Colors.white, size: 16),
+                        Icon(Icons.add_circle_outline, color: Colors.white, size: 16),
                         SizedBox(width: 6),
                         Text(
                           'Isi Saldo',

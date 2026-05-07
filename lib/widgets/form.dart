@@ -34,7 +34,7 @@ class _LoginFormState extends State<LoginForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Email field
-          LoginInputField(
+          InputField(
             label: 'MASUKKAN EMAIL',
             hint: 'nama@email.com',
             controller: widget.emailController,
@@ -55,7 +55,7 @@ class _LoginFormState extends State<LoginForm> {
           const SizedBox(height: 20),
 
           // Password field
-          LoginInputField(
+          InputField(
             label: 'PASSWORD',
             hint: '••••••••',
             controller: widget.passwordController,
@@ -169,7 +169,7 @@ class _RegisterFormState extends State<RegisterForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // 1. Username field
-          LoginInputField(
+          InputField(
             label: 'Username',
             hint: 'Masukkan Username',
             controller: widget.usernameController,
@@ -183,7 +183,7 @@ class _RegisterFormState extends State<RegisterForm> {
           const SizedBox(height: 20),
 
           // 2. Email field
-          LoginInputField(
+          InputField(
             label: 'Email atau No. Telepon',
             hint: 'contoh@email.com atau 0812...',
             controller: widget.emailController,
@@ -198,7 +198,7 @@ class _RegisterFormState extends State<RegisterForm> {
           const SizedBox(height: 20),
 
           // 3. Password field
-          LoginInputField(
+          InputField(
             label: 'Kata Sandi',
             hint: 'Min. 8 karakter',
             controller: widget.passwordController,
@@ -224,7 +224,7 @@ class _RegisterFormState extends State<RegisterForm> {
           const SizedBox(height: 20),
 
           // 4. Confirm Password field
-          LoginInputField(
+          InputField(
             label: 'Konfirmasi Kata Sandi',
             hint: 'Ulangi kata sandi',
             controller: widget.confirmPasswordController,

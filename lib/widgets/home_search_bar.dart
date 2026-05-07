@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class HomeSearchBar extends StatelessWidget {
-  const HomeSearchBar({super.key});
+  final String hintText;
+  const HomeSearchBar({super.key, required this.hintText});
 
   @override
   Widget build(BuildContext context) {
@@ -11,9 +12,9 @@ class HomeSearchBar extends StatelessWidget {
         color: const Color(0xFFF2F4F7),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const TextField(
+      child: TextField(
         decoration: InputDecoration(
-          hintText: 'Cari galon atau gas...',
+          hintText: hintText,
           hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
           prefixIcon: Icon(Icons.search, color: Colors.grey),
           border: InputBorder.none,
