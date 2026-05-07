@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../data/dummy_data.dart';
-import '../../widgets/home_app_bar.dart';
-import '../../widgets/home_search_bar.dart';
-import '../../widgets/saldo_card.dart';
-import '../../widgets/reward_card.dart';
-import '../../widgets/promo_banner.dart';
-import '../../widgets/catalog_section.dart';
-import '../../widgets/gas_section.dart';
-import '../../widgets/floating_cart_button.dart';
-import '../../widgets/main_bottom_nav_bar.dart';
+import '../../widgets/home/home_app_bar.dart';
+import '../../widgets/home/home_search_bar.dart';
+import '../../widgets/home/saldo_card.dart';
+import '../../widgets/home/reward_card.dart';
+import '../../widgets/home/promo_banner.dart';
+import '../../widgets/home/catalog_section.dart';
+import '../../widgets/home/gas_section.dart';
+import '../../widgets/home/floating_cart_button.dart';
+import '../../widgets/shared/main_bottom_nav_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -35,7 +36,10 @@ class _HomePageState extends State<HomePage> {
               children: [
                 const HomeSearchBar(),
                 const SizedBox(height: 16),
-                SaldoCard(saldo: DummyData.saldoAbunemen),
+                SaldoCard(
+                  saldo: DummyData.saldoAbunemen,
+                  onTap: () => context.push('/topup'),
+                ),
                 const SizedBox(height: 14),
                 RewardCard(
                   points: DummyData.pointRewards,
@@ -64,7 +68,16 @@ class _HomePageState extends State<HomePage> {
       ),
       bottomNavigationBar: MainBottomNavBar(
         currentIndex: _currentNavIndex,
-        onTap: (index) => setState(() => _currentNavIndex = index),
+        onTap: (index) {
+          if (index == 0) {
+            context.go('/home');
+          } else if (index == 2) {
+            context.go('/profile');
+          } else if (index == 3) {
+            context.go('/chat');
+          }
+          setState(() => _currentNavIndex = index);
+        },
       ),
     );
   }

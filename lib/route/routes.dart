@@ -8,6 +8,11 @@ import '../pages/auth/token_verifikasi.dart';
 import '../pages/auth/ganti_password.dart';
 import '../pages/auth/success_screen.dart';
 import '../pages/home/home_page.dart';
+import '../pages/profile/profile_page.dart';
+import '../pages/profile/address_form_page.dart';
+import '../pages/topup/topup_page.dart';
+import '../pages/order/voucher_page.dart';
+import '../pages/chat/chat_page.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -50,6 +55,31 @@ class AppRouter {
         path: '/home',
         name: 'home',
         builder: (context, state) => const HomePage(), 
+      ),
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        name: 'edit-address',
+        builder: (context, state) => const AddressFormPage(),
+      ),
+      GoRoute(
+        path: '/topup',
+        name: 'topup',
+        builder: (context, state) => const TopUpPage(),
+      ),
+      GoRoute(
+        path: '/voucher',
+        name: 'voucher',
+        builder: (context, state) => const VoucherPage(),
+      ),
+      GoRoute(
+        path: '/chat',
+        name: 'chat',
+        builder: (context, state) => const ChatPage(),
       ),
     ],
   );

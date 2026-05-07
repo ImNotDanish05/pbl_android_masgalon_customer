@@ -1,4 +1,5 @@
 import '../models/product_model.dart';
+import '../models/profile_model.dart';
 
 class DummyData {
   // Katalog Galon
@@ -47,4 +48,39 @@ class DummyData {
   static const String promoTitle = 'Hemat 20%\nUntuk\nLangganan 5\nGalon';
   static const String promoLabel = 'PROMO BULAN INI';
   static const int cartItemCount = 2;
+
+  // Profil
+  static const ProfileModel profile = ProfileModel(
+    name: 'Mas Basith',
+    email: 'basithyafi@gmail.com',
+    avatarAsset: 'assets/images/avatar_dummy.png',
+    saldo: 124500,
+  );
+
+  // Voucher
+  static const List<VoucherModel> voucherList = [
+    VoucherModel(
+      title: 'Diskon galon beli 1 gratis 1',
+      subtitle: 'Promo terbaik untukmu',
+    ),
+    VoucherModel(
+      title: 'Diskon Gas beli 1 gratis 1',
+      subtitle: 'Promo terbaik untukmu',
+    ),
+  ];
+
+  // Alamat
+  static const List<AddressModel> addressList = [
+    AddressModel(
+      label: 'Rumah',
+      name: 'Rumah (Utama)',
+      detail: 'Jl. Menteng Pulo No. 42, Setiabudi, Jakarta Selatan, DKI Jakarta 12970',
+      isUtama: true,
+    ),
+    AddressModel(
+      label: 'Kantor',
+      name: 'Kantor',
+      detail: 'Menara Imperium, Lt. 15, Kuningan, Jakarta Selatan, DKI Jakarta 12980',
+    ),
+  ];
 }

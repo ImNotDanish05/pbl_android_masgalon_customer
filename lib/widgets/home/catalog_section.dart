@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/product_model.dart';
-import '../core/constants/app_colors.dart';
-import 'section_header.dart';
+import '../../models/product_model.dart';
+import '../../core/constants/app_colors.dart';
+import '../shared/section_header.dart';
 
 class CatalogSection extends StatelessWidget {
   final List<ProductModel> products;

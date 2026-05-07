@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../core/constants/app_colors.dart';
-import '../pages/orders/checkout_page.dart';
+import '../../core/constants/app_colors.dart';
+import '../../pages/order/checkout_page.dart';
 
 class FloatingCartButton extends StatelessWidget {
   final int itemCount;
