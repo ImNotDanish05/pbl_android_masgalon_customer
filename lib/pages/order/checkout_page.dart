@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../widgets/checkout_item_card.dart';
+import '../../widgets/order/checkout_item_card.dart';
 import '../../data/dummy_data.dart';
 
 class CheckoutPage extends StatefulWidget {

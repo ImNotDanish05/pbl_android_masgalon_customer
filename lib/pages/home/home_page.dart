@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/dummy_data.dart';
-import '../../widgets/main_head_bar.dart';
-import '../../widgets/home_search_bar.dart';
-import '../../widgets/saldo_card.dart';
-import '../../widgets/reward_card.dart';
-import '../../widgets/promo_banner.dart';
-import '../../widgets/catalog_section.dart';
-import '../../widgets/gas_section.dart';
-import '../../widgets/floating_cart_button.dart';
-import '../../widgets/main_bottom_nav_bar.dart';
+import '../../widgets/home/home_app_bar.dart';
+import '../../widgets/home/home_search_bar.dart';
+import '../../widgets/home/saldo_card.dart';
+import '../../widgets/home/reward_card.dart';
+import '../../widgets/home/promo_banner.dart';
+import '../../widgets/home/catalog_section.dart';
+import '../../widgets/home/gas_section.dart';
+import '../../widgets/home/floating_cart_button.dart';
+import '../../widgets/shared/main_bottom_nav_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -38,9 +38,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 16),
                 SaldoCard(
                   saldo: DummyData.saldoAbunemen,
-                  onTopUpTap: () {
-                    print("Cihuyy, tombol isi saldo ditekan!");
-                  },
+                  onTap: () => context.push('/topup'),
                 ),
                 const SizedBox(height: 14),
                 RewardCard(
@@ -72,12 +70,13 @@ class _HomePageState extends State<HomePage> {
         currentIndex: _currentNavIndex,
         onTap: (index) {
           if (index == 0) {
-            setState(() => _currentNavIndex = index);
-          } else if (index == 1) {
-            context.go('/orders');
-          } else {
-            setState(() => _currentNavIndex = index);
+            context.go('/home');
+          } else if (index == 2) {
+            context.go('/profile');
+          } else if (index == 3) {
+            context.go('/chat');
           }
+          setState(() => _currentNavIndex = index);
         },
       ),
     );
