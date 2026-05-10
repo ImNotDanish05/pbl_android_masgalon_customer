@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/dummy_data.dart';
-import '../../widgets/general_app_bar.dart';
-import '../../widgets/custombutton.dart';
+import '../../widgets/shared/general_app_bar.dart';
+import '../../widgets/shared/custombutton.dart';
 
 class TopUpQrPage extends StatelessWidget {
   const TopUpQrPage({super.key});
@@ -15,7 +15,13 @@ class TopUpQrPage extends StatelessWidget {
       backgroundColor: const Color(
         0xFFF8F9FA,
       ), // Latar sedikit keabuan seperti desain
-      appBar: const GeneralAppBar(title: 'Top Up Saldo'),
+      appBar: GeneralAppBar(
+        title: 'Top Up Saldo',
+        onBackPressed: () {
+          context.pop();
+        },
+        backgroundColor: Colors.white,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(

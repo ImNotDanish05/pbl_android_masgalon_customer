@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/dummy_data.dart';
-import '../../widgets/general_app_bar.dart'; // Pastikan path ini benar!
+import '../../widgets/shared/general_app_bar.dart'; // Pastikan path ini benar!
 import '../../widgets/order/history_order_card.dart';
 
 class HistoryOrderPage extends StatefulWidget {
@@ -27,6 +27,9 @@ class _HistoryOrderPageState extends State<HistoryOrderPage> {
       backgroundColor: const Color(0xFFF8F9FA), // Abu-abu background terang
       appBar: GeneralAppBar(
         title: 'Riwayat Pesanan',
+        onBackPressed: () {
+          context.pop();
+        },
         actions: [
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.black87),
@@ -85,7 +88,7 @@ class _HistoryOrderPageState extends State<HistoryOrderPage> {
                     order: order,
                     onLacakTap: () {
                       // Arahkan ke detail pesanan saat tombol lacak ditekan
-                      context.pushNamed('detail-order');
+                      context.push('/track-order');
                     },
                   );
                 }).toList(),

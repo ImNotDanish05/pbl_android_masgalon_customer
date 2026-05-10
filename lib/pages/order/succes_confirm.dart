@@ -3,9 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/dummy_data.dart';
-import '../../widgets/rupiah_format.dart'; // Import extension rupiahmu
-import '../../widgets/general_app_bar.dart';
-import '../../widgets/custombutton.dart';
+import '../../widgets/shared/rupiah_format.dart'; // Import extension rupiahmu
+import '../../widgets/shared/general_app_bar.dart';
+import '../../widgets/shared/custombutton.dart';
 
 class PaymentSuccessPage extends StatelessWidget {
   const PaymentSuccessPage({super.key});
@@ -195,7 +195,7 @@ class PaymentSuccessPage extends StatelessWidget {
                   CustomButton(
                     text: 'Lacak Pesanan',
                     icon: Icons.local_shipping_outlined,
-                    onPressed: () => context.pushNamed('order-history'),
+                    onPressed: () => context.pushNamed('track-order'),
                   ),
                   const SizedBox(height: 12),
                   CustomButton(

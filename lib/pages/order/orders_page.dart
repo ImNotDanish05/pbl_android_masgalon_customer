@@ -39,7 +39,9 @@ class _OrdersPageState extends State<OrdersPage> {
               title: 'Riwayat Pesanan',
               subtitle: 'Pantau pengiriman air Anda',
               actionText: 'Lihat Semua',
-              onActionTap: () {},
+              onActionTap: () {
+                context.push('/orders/history');
+              },
             ),
             const SizedBox(height: 14),
             Column(
