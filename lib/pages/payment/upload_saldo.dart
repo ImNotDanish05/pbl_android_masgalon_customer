@@ -7,7 +7,7 @@ import '../../data/dummy_data.dart';
 // Import widget global
 import '../../widgets/general_app_bar.dart';
 import '../../widgets/bottom_action.dart';
-import '../../widgets/input_field.dart'; // <-- Import widget input milikmu
+import '../../widgets/shared/input_field.dart'; // <-- Import widget input milikmu
 
 // Import widget lokal
 import '../../widgets/verification_info_box.dart';

@@ -2,6 +2,8 @@ import '../models/order_detail_model.dart';
 import '../models/order_model.dart';
 import '../models/product_model.dart';
 import '../models/order_history_model.dart';
+import '../models/product_model.dart';
+import '../models/profile_model.dart';
 
 class DummyData {
   // Katalog Galon
@@ -113,6 +115,25 @@ class DummyData {
     ),
   ];
 
+  static const List<VoucherModel> voucherList = [
+    VoucherModel(
+      title: 'Diskon galon beli 1 gratis 1',
+      subtitle: 'Promo terbaik untukmu',
+    ),
+    VoucherModel(
+      title: 'Diskon Gas beli 1 gratis 1',
+      subtitle: 'Promo terbaik untukmu',
+    ),
+  ];
+
+  // Profil
+  static const ProfileModel profile = ProfileModel(
+    name: 'Mas Basith',
+    email: 'basithyafi@gmail.com',
+    avatarAsset: 'assets/images/avatar_dummy.png',
+    saldo: 124500,
+  );
+
   static final List<HistoryOrderModel> orders = [
     // --- PESANAN AKTIF ---
     HistoryOrderModel(
@@ -166,30 +187,43 @@ class DummyData {
   static const String deliveryEstimate = 'Estimasi tiba dalam 30-45 menit';
 
   static const String title = 'Unggah Bukti Transfer';
-  static const String subtitle = 'Pastikan foto atau screenshot bukti transfer terlihat jelas untuk mempercepat proses verifikasi.';
-  
+  static const String subtitle =
+      'Pastikan foto atau screenshot bukti transfer terlihat jelas untuk mempercepat proses verifikasi.';
+
   static const String infoTitle = 'Proses Verifikasi';
-  static const String infoDesc = 'Saldo Anda akan otomatis bertambah setelah admin memverifikasi bukti transfer ini. Mohon tunggu sebentar.';
+  static const String infoDesc =
+      'Saldo Anda akan otomatis bertambah setelah admin memverifikasi bukti transfer ini. Mohon tunggu sebentar.';
 
   static const String uploadTitle = 'Bukti Pembayaran (Receipt)';
   static const String uploadHint = 'Pilih foto atau tarik file ke sini';
   static const String uploadSubHint = 'Maksimal ukuran file 5MB (JPG, PNG)';
-
 
   static const List<String> paymentInstructions = [
     'Buka aplikasi e-Wallet (OVO, GoPay, Dana) atau M-Banking Anda.',
     'Pilih menu Scan QR atau Pay.',
     'Arahkan kamera ke QR Code di atas.',
     'Pastikan nama merchant adalah Mas Galon.',
-    'Konfirmasi pembayaran sesuai nominal.'
+    'Konfirmasi pembayaran sesuai nominal.',
   ];
 
-  // --- DATA HALAMAN BERHASIL ---
+  // Alamat
+  static const List<AddressModel> addressList = [
+    AddressModel(
+      label: 'Rumah',
+      name: 'Rumah (Utama)',
+      detail:
+          'Jl. Menteng Pulo No. 42, Setiabudi, Jakarta Selatan, DKI Jakarta 12970',
+      isUtama: true,
+    ),
+    AddressModel(
+      label: 'Kantor',
+      name: 'Kantor',
+      detail:
+          'Menara Imperium, Lt. 15, Kuningan, Jakarta Selatan, DKI Jakarta 12980',
+    ),
+  ];
+
   static const String successTitle = 'Top Up Berhasil';
-  // Catatan UI/UX: Di desain teksnya "Pesanan Anda sedang diproses...", 
-  // tapi untuk dompet digital mungkin lebih pas "Saldo Anda". 
-  // Kamu bisa sesuaikan sendiri nanti!
-  static const String successSubtitle = 'Terima kasih! Saldo Anda sedang diproses dan akan segera bertambah setelah verifikasi.'; 
-
-
+  static const String successSubtitle =
+      'Terima kasih! Saldo Anda sedang diproses dan akan segera bertambah setelah verifikasi.';
 }

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/dummy_data.dart';
 import '../../widgets/general_app_bar.dart'; // Pastikan path ini benar!
-import '../../widgets/history_order_card.dart';
+import '../../widgets/order/history_order_card.dart';
 
 class HistoryOrderPage extends StatefulWidget {
   const HistoryOrderPage({super.key});

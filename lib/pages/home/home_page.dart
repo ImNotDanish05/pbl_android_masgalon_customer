@@ -71,6 +71,8 @@ class _HomePageState extends State<HomePage> {
         onTap: (index) {
           if (index == 0) {
             context.go('/home');
+          }else if (index == 1) {
+            context.go('/orders');
           } else if (index == 2) {
             context.go('/profile');
           } else if (index == 3) {

@@ -3,9 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../../widgets/main_head_bar.dart';
 import '../../widgets/saldo_card.dart';
 import '../../data/dummy_data.dart';
-import '../../widgets/main_bottom_nav_bar.dart';
-import '../../widgets/order_history_card.dart';
-import '../../widgets/section_header.dart';
+import '../../widgets/shared/main_bottom_nav_bar.dart';
+import '../../widgets/order/order_history_card.dart';
+import '../../widgets/shared/section_header.dart';
 import '../../core/constants/app_colors.dart';
 
 class OrdersPage extends StatefulWidget {
@@ -57,14 +57,17 @@ class _OrdersPageState extends State<OrdersPage> {
       ),
       bottomNavigationBar: MainBottomNavBar(
         currentIndex: _currentNavIndex,
-        onTap: (index) {
-          if (index == 1) {
-            setState(() => _currentNavIndex = index);
-          } else if (index == 0) {
+        onTap: (i) {
+          if (i == 1) {
+            setState(() => _currentNavIndex = i);
+          } else if (i == 0) {
             context.go('/home');
-          } else {
-            setState(() => _currentNavIndex = index);
+          } else if (i == 2) {
+            context.go('/profile');
+          } else if (i == 3) {
+            context.go('/chat');
           }
+          setState(() => _currentNavIndex = i);
         },
       ),
     );

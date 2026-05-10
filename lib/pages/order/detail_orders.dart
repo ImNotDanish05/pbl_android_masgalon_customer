@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/general_app_bar.dart';
-import '../../widgets/section_header.dart';
+import '../../widgets/shared/section_header.dart';
 import '../../widgets/bottom_action.dart';
-import '../../widgets/order_detail_widget.dart';
+import '../../widgets/order/order_detail_widget.dart';
 
 class OrderDetailPage extends StatelessWidget {
   const OrderDetailPage({super.key});
@@ -14,7 +14,6 @@ class OrderDetailPage extends StatelessWidget {
       appBar: GeneralAppBar(
         title: 'Rincian Pesanan',
         showBackButton: true,
-        onBackPressed: () {},
         backgroundColor: Colors.white,
       ),
       body: SingleChildScrollView(

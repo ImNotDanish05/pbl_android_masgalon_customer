@@ -4,12 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/dummy_data.dart';
 import '../../data/dummy_confirm_order.dart';
-import '../../widgets/confirm_address_section.dart';
-import '../../widgets/confirm_items_section.dart';
-import '../../widgets/confirm_voucher_section.dart';
-import '../../widgets/confirm_delivery_section.dart';
-import '../../widgets/confirm_payment_section.dart';
-import '../../widgets/confirm_summary_section.dart';
+import '../../widgets/order/confirm_address_section.dart';
+import '../../widgets/order/confirm_items_section.dart';
+import '../../widgets/order/confirm_voucher_section.dart';
+import '../../widgets/order/confirm_delivery_section.dart';
+import '../../widgets/order/confirm_payment_section.dart';
+import '../../widgets/order/confirm_summary_section.dart';
 import '../../widgets/general_app_bar.dart';
 import '../../widgets/bottom_action.dart';
 

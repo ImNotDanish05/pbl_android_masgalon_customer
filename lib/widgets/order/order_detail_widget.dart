@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../data/detail_order_dummy.dart';
-import '../../core/constants/app_colors.dart';
+import '../../data/detail_order_dummy.dart';
+import '../../../core/constants/app_colors.dart';
 
 // ==========================================
 // 1. status_pesanan_card.dart
