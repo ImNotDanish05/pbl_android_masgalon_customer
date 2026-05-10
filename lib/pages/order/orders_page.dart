@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../widgets/main_head_bar.dart';
+import '../../widgets/shared/main_head_bar.dart';
 import '../../widgets/shared/saldo_card.dart';
 import '../../data/dummy_data.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
