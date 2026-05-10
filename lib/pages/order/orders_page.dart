@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../widgets/main_head_bar.dart';
+import '../../widgets/shared/main_head_bar.dart';
 import '../../widgets/saldo_card.dart';
 import '../../data/dummy_data.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
@@ -31,7 +31,7 @@ class _OrdersPageState extends State<OrdersPage> {
             SaldoCard(
               saldo: DummyData.saldoAbunemen,
               onTopUpTap: () {
-                print("Cihuyy, tombol isi saldo ditekan!");
+                context.push('/topup');
               },
             ),
             const SizedBox(height: 24),
@@ -39,7 +39,9 @@ class _OrdersPageState extends State<OrdersPage> {
               title: 'Riwayat Pesanan',
               subtitle: 'Pantau pengiriman air Anda',
               actionText: 'Lihat Semua',
-              onActionTap: () {},
+              onActionTap: () {
+                context.push('/orders/history');
+              },
             ),
             const SizedBox(height: 14),
             Column(

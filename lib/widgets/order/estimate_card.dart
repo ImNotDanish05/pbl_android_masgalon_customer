@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../data/dummy_track.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../data/dummy_track.dart';
 
 class EstimateCard extends StatelessWidget {
   const EstimateCard({super.key});

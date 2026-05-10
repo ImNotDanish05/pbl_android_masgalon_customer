@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/dummy_data.dart';
-import '../../widgets/general_app_bar.dart';
+import '../../widgets/shared/general_app_bar.dart';
 
 class TopUpSuccessPage extends StatelessWidget {
   const TopUpSuccessPage({super.key});

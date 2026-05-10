@@ -10,7 +10,7 @@ import '../../widgets/order/confirm_voucher_section.dart';
 import '../../widgets/order/confirm_delivery_section.dart';
 import '../../widgets/order/confirm_payment_section.dart';
 import '../../widgets/order/confirm_summary_section.dart';
-import '../../widgets/general_app_bar.dart';
+import '../../widgets/shared/general_app_bar.dart';
 import '../../widgets/bottom_action.dart';
 
 class ConfirmOrderPage extends StatefulWidget {
@@ -47,7 +47,9 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
       appBar: GeneralAppBar(
         title: 'Konfirmasi Pesanan',
         showBackButton: true,
-        onBackPressed: () {},
+        onBackPressed: () {
+          context.pop();
+        },
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
@@ -106,7 +108,9 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
       ),
       bottomNavigationBar: BottomActionButton(
         label: 'Bayar Sekarang',
-        onPressed: () {},
+        onPressed: () {
+          context.push('/orders-success');
+        },
       ),
     );
   }

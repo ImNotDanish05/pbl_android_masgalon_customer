@@ -5,7 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/dummy_data.dart';
 
 // Import widget global
-import '../../widgets/general_app_bar.dart';
+import '../../widgets/shared/general_app_bar.dart';
 import '../../widgets/bottom_action.dart';
 import '../../widgets/shared/input_field.dart'; // <-- Import widget input milikmu
 

@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/dummy_track.dart';
-import '../../widgets/estimate_card.dart';
+import '../../widgets/order/estimate_card.dart';
 import '../../widgets/driver_info_sheet.dart';
 
 class TrackOrderPage extends StatelessWidget {

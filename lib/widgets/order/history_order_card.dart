@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../models/order_history_model.dart';
-import '../../../../widgets/status_badge.dart'; // Pastikan path ini benar!
+import '../shared/status_badge.dart'; // Pastikan path ini benar!
 
 class HistoryOrderCard extends StatelessWidget {
   final HistoryOrderModel order;
