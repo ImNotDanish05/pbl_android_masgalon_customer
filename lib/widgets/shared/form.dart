@@ -184,13 +184,17 @@ class _RegisterFormState extends State<RegisterForm> {
 
           // 2. Email field
           LoginInputField(
-            label: 'Email atau No. Telepon',
-            hint: 'contoh@email.com atau 0812...',
+            label: 'Email',
+            hint: 'contoh@email.com',
             controller: widget.emailController,
             keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Email atau telepon tidak boleh kosong';
+                return 'Email tidak boleh kosong';
+              }
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                  .hasMatch(value.trim())) {
+                return 'Format email tidak valid';
               }
               return null;
             },

@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../pages/auth/login_page.dart';
 import '../pages/auth/registrasi.dart';
 import '../pages/auth/lupa_password.dart';
-import '../pages/auth/token_verifikasi.dart';
+import '../pages/auth/login_token_verifikasi.dart';
+import '../pages/auth/registrasi_token_verifikasi.dart';
 import '../pages/auth/ganti_password.dart';
 import '../pages/auth/success_screen.dart';
 import '../pages/home/home_page.dart';
@@ -30,20 +31,30 @@ class AppRouter {
         builder: (context, state) => const RegisterPage(),
       ),
       GoRoute(
-        path: '/forgot-password',
-        name: 'forgot-password',
-        builder: (context, state) => const ForgotPasswordScreen(),
+        path: '/register/verify',
+        name: 'register-verify',
+        builder: (context, state) {
+          final email = state.extra as String? ?? '';
+          return RegistrasiTokenVerifikasiScreen(email: email);
+        },
       ),
       GoRoute(
-        path: '/token-verification',
-        name: 'token-verification',
-        builder: (context, state) =>
-            const TokenVerificationScreen(email: ''),
+        path: '/forgot-password',
+        name: 'forgot-password',
+        builder: (context, state) => const LupaPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password/verify',
+        name: 'forgot-password-verify',
+        builder: (context, state) {
+          final email = state.extra as String? ?? '';
+          return LoginTokenVerifikasiScreen(email: email);
+        },
       ),
       GoRoute(
         path: '/change-password',
         name: 'change-password',
-        builder: (context, state) => const ResetPasswordScreen(),
+        builder: (context, state) => const GantiPasswordScreen(),
       ),
       GoRoute(
         path: '/success',
@@ -55,7 +66,7 @@ class AppRouter {
       GoRoute(
         path: '/home',
         name: 'home',
-        builder: (context, state) => const HomePage(), 
+        builder: (context, state) => const HomePage(),
       ),
       GoRoute(
         path: '/profile',

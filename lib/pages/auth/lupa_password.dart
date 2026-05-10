@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../services/supabase_client.dart';
 import '../../widgets/auth/auth_background.dart';
-import 'token_verifikasi.dart';
+import 'login_token_verifikasi.dart';
 
 final lupaPasswordLoadingProvider = StateProvider<bool>((ref) => false);
 final lupaPasswordErrorProvider = StateProvider<String?>((ref) => null);
@@ -53,7 +53,7 @@ class _LupaPasswordScreenState extends ConsumerState<LupaPasswordScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => TokenVerifikasiScreen(email: email),
+          builder: (context) => LoginTokenVerifikasiScreen(email: email),
         ),
       );
     } on AuthException catch (e) {

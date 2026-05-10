@@ -11,20 +11,21 @@ import '../../services/supabase_client.dart';
 import '../../widgets/auth/auth_background.dart';
 import 'ganti_password.dart';
 
-final tokenVerifikasiLoadingProvider = StateProvider<bool>((ref) => false);
-final tokenVerifikasiErrorProvider = StateProvider<String?>((ref) => null);
+final loginTokenLoadingProvider = StateProvider<bool>((ref) => false);
+final loginTokenErrorProvider = StateProvider<String?>((ref) => null);
 
-class TokenVerifikasiScreen extends ConsumerStatefulWidget {
+class LoginTokenVerifikasiScreen extends ConsumerStatefulWidget {
   final String email;
 
-  const TokenVerifikasiScreen({super.key, required this.email});
+  const LoginTokenVerifikasiScreen({super.key, required this.email});
 
   @override
-  ConsumerState<TokenVerifikasiScreen> createState() =>
-      _TokenVerifikasiScreenState();
+  ConsumerState<LoginTokenVerifikasiScreen> createState() =>
+      _LoginTokenVerifikasiScreenState();
 }
 
-class _TokenVerifikasiScreenState extends ConsumerState<TokenVerifikasiScreen>
+class _LoginTokenVerifikasiScreenState
+    extends ConsumerState<LoginTokenVerifikasiScreen>
     with SingleTickerProviderStateMixin {
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
@@ -73,16 +74,16 @@ class _TokenVerifikasiScreenState extends ConsumerState<TokenVerifikasiScreen>
   }
 
   Future<void> _verifyToken() async {
-    ref.read(tokenVerifikasiErrorProvider.notifier).state = null;
+    ref.read(loginTokenErrorProvider.notifier).state = null;
 
     final token = _controllers.map((controller) => controller.text).join();
     if (token.length != 8) {
-      ref.read(tokenVerifikasiErrorProvider.notifier).state =
+      ref.read(loginTokenErrorProvider.notifier).state =
           'Masukkan 8 digit token yang dikirim ke email Anda.';
       return;
     }
 
-    ref.read(tokenVerifikasiLoadingProvider.notifier).state = true;
+    ref.read(loginTokenLoadingProvider.notifier).state = true;
 
     try {
       await supabase.auth.verifyOTP(
@@ -98,7 +99,7 @@ class _TokenVerifikasiScreenState extends ConsumerState<TokenVerifikasiScreen>
       );
     } on AuthException catch (e) {
       if (!mounted) return;
-      ref.read(tokenVerifikasiErrorProvider.notifier).state = _authErrorMessage(
+      ref.read(loginTokenErrorProvider.notifier).state = _authErrorMessage(
         e.message,
       );
       _shakeController.forward(from: 0);
@@ -110,15 +111,15 @@ class _TokenVerifikasiScreenState extends ConsumerState<TokenVerifikasiScreen>
       });
     } on SocketException {
       if (!mounted) return;
-      ref.read(tokenVerifikasiErrorProvider.notifier).state =
+      ref.read(loginTokenErrorProvider.notifier).state =
           'Tidak dapat terhubung ke jaringan. Periksa koneksi internet Anda.';
     } catch (_) {
       if (!mounted) return;
-      ref.read(tokenVerifikasiErrorProvider.notifier).state =
+      ref.read(loginTokenErrorProvider.notifier).state =
           'Terjadi kesalahan saat memverifikasi token. Coba lagi.';
     } finally {
       if (mounted) {
-        ref.read(tokenVerifikasiLoadingProvider.notifier).state = false;
+        ref.read(loginTokenLoadingProvider.notifier).state = false;
       }
     }
   }
@@ -140,7 +141,7 @@ class _TokenVerifikasiScreenState extends ConsumerState<TokenVerifikasiScreen>
   }
 
   void _handleOtpChanged(String value, int index) {
-    ref.read(tokenVerifikasiErrorProvider.notifier).state = null;
+    ref.read(loginTokenErrorProvider.notifier).state = null;
 
     final digits = value.replaceAll(RegExp(r'\D'), '');
     if (digits.length > 1) {
@@ -219,7 +220,7 @@ class _TokenVerifikasiScreenState extends ConsumerState<TokenVerifikasiScreen>
       if (mounted) _focusNodes[0].requestFocus();
     } catch (_) {
       if (mounted) {
-        ref.read(tokenVerifikasiErrorProvider.notifier).state =
+        ref.read(loginTokenErrorProvider.notifier).state =
             'Gagal mengirim ulang token. Coba lagi.';
       }
     }
@@ -227,8 +228,8 @@ class _TokenVerifikasiScreenState extends ConsumerState<TokenVerifikasiScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(tokenVerifikasiLoadingProvider);
-    final errorMessage = ref.watch(tokenVerifikasiErrorProvider);
+    final isLoading = ref.watch(loginTokenLoadingProvider);
+    final errorMessage = ref.watch(loginTokenErrorProvider);
 
     return AuthBackground(
       child: Center(
@@ -390,10 +391,6 @@ class _TokenVerifikasiScreenState extends ConsumerState<TokenVerifikasiScreen>
       ),
     );
   }
-}
-
-class TokenVerificationScreen extends TokenVerifikasiScreen {
-  const TokenVerificationScreen({super.key, required super.email});
 }
 
 class _OtpBox extends StatelessWidget {

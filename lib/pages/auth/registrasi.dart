@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7,6 +9,7 @@ import '../../widgets/shared/header.dart';
 import '../../widgets/shared/bottom_navbar.dart';
 import '../../widgets/shared/form.dart';
 import 'login_page.dart';
+import 'registrasi_token_verifikasi.dart';
 
 // ================================================
 // PROVIDERS — loading & error state
@@ -74,7 +77,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     ref.read(registrasiLoadingProvider.notifier).state = true;
 
     try {
-      // 4. Call supabase.auth.signUp
+      // Step 1: Try signUp
       final response = await supabase.auth.signUp(
         email: email,
         password: password,
@@ -87,42 +90,58 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         return;
       }
 
-      // 5. Insert to users table
-      await supabase.from('users').insert({
-        'id': user.id,
-        'email': email,
-        'role': 'Customer',
-      });
+      // Step 2: Check if already fully registered in our users table
+      final existingUser = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
 
-      // 6. Insert to customers table
-      await supabase.from('customers').insert({
-        'user_id': user.id,
-        'username': username,
-      });
+      if (existingUser != null) {
+        // User sudah terdaftar lengkap → block
+        await supabase.auth.signOut();
+        if (!mounted) return;
+        ref.read(registrasiErrorProvider.notifier).state =
+            'Email sudah terdaftar. Silakan login.';
+        return;
+      }
 
-      // 7. On success → navigate to LoginPage with success message
+      // Step 3: Not in users table yet (new or zombie account)
+      // Resend OTP agar fresh, lalu ke token screen
+      await supabase.auth.resend(
+        type: OtpType.signup,
+        email: email,
+      );
+
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Registrasi berhasil! Silakan login.'),
-          backgroundColor: AppColors.primaryBlue,
-          behavior: SnackBarBehavior.floating,
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RegistrasiTokenVerifikasiScreen(
+            email: email,
+            username: username,
+          ),
         ),
       );
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-        (route) => false,
-      );
     } on AuthException catch (e) {
-      // 8. Catch AuthException → show error in Bahasa Indonesia
       if (!mounted) return;
       ref.read(registrasiErrorProvider.notifier).state =
-          _translateAuthError(e.message);
-    } catch (_) {
+          _authErrorMessage(e.message);
+
+    } on PostgrestException catch (e) {
       if (!mounted) return;
       ref.read(registrasiErrorProvider.notifier).state =
-          'Tidak dapat terhubung. Periksa koneksi internet kamu.';
+          'Terjadi kesalahan database. Coba lagi. (${e.message})';
+
+    } on SocketException {
+      if (!mounted) return;
+      ref.read(registrasiErrorProvider.notifier).state =
+          'Tidak dapat terhubung ke jaringan. Periksa koneksi internet kamu.';
+
+    } catch (e) {
+      if (!mounted) return;
+      ref.read(registrasiErrorProvider.notifier).state =
+          'Terjadi kesalahan: ${e.toString()}';
     } finally {
       if (mounted) {
         ref.read(registrasiLoadingProvider.notifier).state = false;
@@ -130,24 +149,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     }
   }
 
-  String _translateAuthError(String message) {
+  String _authErrorMessage(String message) {
     final lower = message.toLowerCase();
-    if (lower.contains('user already registered') ||
-        lower.contains('already registered') ||
+    if (lower.contains('already registered') ||
         lower.contains('already exists')) {
-      return 'Email sudah terdaftar.';
+      // Dihandle via maybeSingle check di atas
+      return 'Email sudah terdaftar. Silakan login.';
     }
-    if (lower.contains('password should be at least') ||
-        lower.contains('password must be')) {
+    if (lower.contains('password')) {
       return 'Password minimal 8 karakter.';
     }
-    if (lower.contains('network') ||
-        lower.contains('connection') ||
-        lower.contains('socket')) {
-      return 'Tidak dapat terhubung. Periksa koneksi internet kamu.';
-    }
-    if (lower.contains('invalid email')) {
+    if (lower.contains('invalid') && lower.contains('email')) {
       return 'Format email tidak valid.';
+    }
+    if (lower.contains('rate') || lower.contains('too many')) {
+      return 'Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.';
     }
     return message.isNotEmpty ? message : 'Registrasi gagal. Coba lagi.';
   }
