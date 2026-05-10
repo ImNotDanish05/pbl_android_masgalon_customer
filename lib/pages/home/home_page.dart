@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/dummy_data.dart';
 import '../../widgets/home/home_app_bar.dart';
 import '../../widgets/home/home_search_bar.dart';
-import '../../widgets/home/saldo_card.dart';
+import '../../widgets/shared/saldo_card.dart';
 import '../../widgets/home/reward_card.dart';
 import '../../widgets/home/promo_banner.dart';
 import '../../widgets/home/catalog_section.dart';

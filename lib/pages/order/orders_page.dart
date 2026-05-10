@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../widgets/main_head_bar.dart';
-import '../../widgets/saldo_card.dart';
+import '../../widgets/shared/saldo_card.dart';
 import '../../data/dummy_data.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../../widgets/order/order_history_card.dart';
@@ -30,8 +30,8 @@ class _OrdersPageState extends State<OrdersPage> {
           children: [
             SaldoCard(
               saldo: DummyData.saldoAbunemen,
-              onTopUpTap: () {
-                print("Cihuyy, tombol isi saldo ditekan!");
+              onTap: () {
+                context.push('/topup');
               },
             ),
             const SizedBox(height: 24),

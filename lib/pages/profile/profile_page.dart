@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/dummy_data.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../../widgets/profile/profile_info_card.dart';
-import '../../widgets/profile/profile_saldo_card.dart';
+import '../../widgets/shared/saldo_card.dart';
 import '../../widgets/profile/voucher_section.dart';
 import '../../widgets/profile/address_section.dart';
 import '../../widgets/profile/menu_akun_section.dart';
@@ -94,7 +94,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // Saldo Saya
             _SectionLabel(label: 'Saldo Saya'),
             const SizedBox(height: 10),
-            ProfileSaldoCard(
+            SaldoCard(
               saldo: DummyData.profile.saldo,
               onTap: () => context.push('/topup'),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class TopUpStep3 extends StatelessWidget {
   const TopUpStep3({Key? key}) : super(key: key);
@@ -36,13 +37,25 @@ class TopUpStep3 extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 60),
-          TextButton(
-            onPressed: () {
-              // Navigasi kembali ke halaman utama (Home)
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-            child: const Text('Kembali ke Beranda', style: TextStyle(fontWeight: FontWeight.bold)),
-          )
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                backgroundColor: Colors.blue[800],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 6,
+              ),
+              onPressed: () => context.goNamed('home'),
+              icon: const Icon(Icons.home, color: Colors.white),
+              label: const Text(
+                'Kembali ke Beranda',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+              ),
+            ),
+          ),
         ],
       ),
     );

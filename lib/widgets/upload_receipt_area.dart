@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pbl_android_masgalon_customer/data/dummy_data.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../data/dummy_data.dart';
 
 class UploadReceiptArea extends StatelessWidget {
   final VoidCallback onBrowseTap; // Agar fungsi kliknya bisa diatur dari luar
