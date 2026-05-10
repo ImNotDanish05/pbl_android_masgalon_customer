@@ -21,7 +21,6 @@ class CatalogSection extends StatelessWidget {
         SectionHeader(
           title: 'Katalog Galon',
           subtitle: 'Air mineral segar untuk keluarga',
-          actionText: 'Lihat Semua',
           onActionTap: () {},
         ),
         const SizedBox(height: 14),
