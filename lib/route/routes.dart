@@ -14,10 +14,35 @@ import '../pages/profile/address_form_page.dart';
 import '../pages/topup/topup_page.dart';
 import '../pages/order/voucher_page.dart';
 import '../pages/chat/chat_page.dart';
+import '../services/supabase_client.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/login', // Halaman pertama kali aplikasi dibuka
+    initialLocation: '/login',
+    redirect: (context, state) {
+      final session = supabase.auth.currentSession;
+      final isLoggedIn = session != null;
+      final isOnAuthPage = state.matchedLocation == '/login' ||
+          state.matchedLocation == '/register' ||
+          state.matchedLocation == '/register/verify' ||
+          state.matchedLocation == '/forgot-password' ||
+          state.matchedLocation == '/forgot-password/verify' ||
+          state.matchedLocation == '/change-password' ||
+          state.matchedLocation == '/success';
+
+      // If logged in and on an auth page → redirect to home
+      if (isLoggedIn && isOnAuthPage) {
+        return '/home';
+      }
+
+      // If not logged in and trying to access a protected page → redirect to login
+      if (!isLoggedIn && !isOnAuthPage) {
+        return '/login';
+      }
+
+      // No redirect needed
+      return null;
+    },
     routes: [
       //Auth
       GoRoute(
@@ -34,8 +59,11 @@ class AppRouter {
         path: '/register/verify',
         name: 'register-verify',
         builder: (context, state) {
-          final email = state.extra as String? ?? '';
-          return RegistrasiTokenVerifikasiScreen(email: email);
+          final extra = state.extra as Map<String, String>? ?? {};
+          return RegistrasiTokenVerifikasiScreen(
+            email: extra['email'] ?? '',
+            username: extra['username'] ?? '',
+          );
         },
       ),
       GoRoute(

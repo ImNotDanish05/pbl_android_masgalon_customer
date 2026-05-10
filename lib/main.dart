@@ -5,8 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/supabase_client.dart';
 import 'providers/auth_provider.dart';
-import 'pages/auth/login_page.dart';
-import 'pages/home/home_page.dart';
+import 'route/routes.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Required keys that MUST be present in .env
@@ -156,20 +155,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Mas Galon',
       theme: ThemeData(
         primaryColor: const Color(0xFF0D52A1),
         textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
       ),
-      home: const _StartupPage(),
+      routerConfig: AppRouter.router,
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// Startup: check existing session → route to correct page
+// Startup: session check lives in GoRouter redirect (see routes.dart)
+// This splash widget is shown at /startup before the redirect fires
 // ─────────────────────────────────────────────────────────────
 class _StartupPage extends ConsumerStatefulWidget {
   const _StartupPage();
@@ -182,8 +182,6 @@ class _StartupPageState extends ConsumerState<_StartupPage> {
   @override
   void initState() {
     super.initState();
-    // Defer until after first frame so Navigator.pushReplacement
-    // doesn't fire while the widget tree is still being built.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkSession();
     });
@@ -230,10 +228,7 @@ class _StartupPageState extends ConsumerState<_StartupPage> {
       );
 
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-      );
+      AppRouter.router.go('/home');
     } catch (_) {
       _goToLogin();
     }
@@ -241,10 +236,7 @@ class _StartupPageState extends ConsumerState<_StartupPage> {
 
   void _goToLogin() {
     if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-    );
+    AppRouter.router.go('/login');
   }
 
   @override
