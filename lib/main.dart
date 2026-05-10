@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/supabase_client.dart';
+import 'providers/auth_provider.dart';
 import 'pages/auth/login_page.dart';
 import 'pages/home/home_page.dart';
 
@@ -170,14 +171,14 @@ class MyApp extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────
 // Startup: check existing session → route to correct page
 // ─────────────────────────────────────────────────────────────
-class _StartupPage extends StatefulWidget {
+class _StartupPage extends ConsumerStatefulWidget {
   const _StartupPage();
 
   @override
-  State<_StartupPage> createState() => _StartupPageState();
+  ConsumerState<_StartupPage> createState() => _StartupPageState();
 }
 
-class _StartupPageState extends State<_StartupPage> {
+class _StartupPageState extends ConsumerState<_StartupPage> {
   @override
   void initState() {
     super.initState();
@@ -197,25 +198,42 @@ class _StartupPageState extends State<_StartupPage> {
     }
 
     try {
+      // Cek role dulu
       final userData = await supabase
           .from('users')
           .select('role')
           .eq('id', session.user.id)
           .single();
 
-      final role = userData['role'] as String?;
+      final role = userData['role'] as String;
 
-      if (!mounted) return;
-
-      if (role == 'Customer') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
-        );
-      } else {
+      if (role != 'Customer') {
         await supabase.auth.signOut();
         _goToLogin();
+        return;
       }
+
+      // Ambil data customer
+      final customerData = await supabase
+          .from('customers')
+          .select('username, saldo_abunemen')
+          .eq('user_id', session.user.id)
+          .single();
+
+      // Restore ke provider
+      if (!mounted) return;
+      ref.read(authCustomerProvider.notifier).state = AuthCustomer(
+        id: session.user.id,
+        email: session.user.email ?? '',
+        username: customerData['username'] as String,
+        saldoAbunemen: customerData['saldo_abunemen'] as int? ?? 0,
+      );
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+      );
     } catch (_) {
       _goToLogin();
     }

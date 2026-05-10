@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/supabase_client.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/shared/header.dart';
 import '../../widgets/auth/login_welcome_section.dart';
 import '../../widgets/shared/form.dart';
@@ -84,7 +86,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return;
       }
 
-      // 5. If success → navigate to HomePage
+      // 5. Fetch customer data (username & saldo)
+      final customerData = await supabase
+          .from('customers')
+          .select('username, saldo_abunemen')
+          .eq('user_id', response.user!.id)
+          .single();
+
+      // 6. Store into authCustomerProvider
+      ref.read(authCustomerProvider.notifier).state = AuthCustomer(
+        id: response.user!.id,
+        email: response.user!.email ?? '',
+        username: customerData['username'] as String,
+        saldoAbunemen: customerData['saldo_abunemen'] as int? ?? 0,
+      );
+
+      // 7. Navigate to HomePage
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
@@ -92,14 +109,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         (route) => false,
       );
     } on AuthException catch (e) {
-      // 6. Catch AuthException → show error in Bahasa Indonesia
+      // Catch AuthException → show error in Bahasa Indonesia
       if (!mounted) return;
       ref.read(loginPageErrorProvider.notifier).state =
           _translateAuthError(e.message);
-    } catch (_) {
+    } on PostgrestException catch (e) {
       if (!mounted) return;
       ref.read(loginPageErrorProvider.notifier).state =
-          'Terjadi kesalahan. Periksa koneksi internet dan coba lagi.';
+          'Gagal mengambil data akun. Coba lagi. (${e.message})';
+    } on SocketException {
+      if (!mounted) return;
+      ref.read(loginPageErrorProvider.notifier).state =
+          'Tidak dapat terhubung ke jaringan. Periksa koneksi internet kamu.';
+    } catch (e) {
+      if (!mounted) return;
+      ref.read(loginPageErrorProvider.notifier).state =
+          'Terjadi kesalahan: ${e.toString()}';
     } finally {
       if (mounted) {
         ref.read(loginPageLoadingProvider.notifier).state = false;
