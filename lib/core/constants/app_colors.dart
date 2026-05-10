@@ -9,4 +9,10 @@ class AppColors {
   static const Color textDark = Color(0xFF111827);
   static const Color dividerColor = Color(0xFFE8EDF5);
   static const Color darkBlue = Color(0xFF0D52A1);
+  static const Color successGreen = Color(0xFF147950);
+  static const Color successBg = Color(0xFFE6F9EF);
+  static const Color dangerRed = Color(0xFFB42318);
+  static const Color dangerBg = Color(0xFFFDE8E8);
+  static const Color warningOrange = Color(0xFF92400E);
+  static const Color warningBg = Color(0xFFFFF4DB);
 }

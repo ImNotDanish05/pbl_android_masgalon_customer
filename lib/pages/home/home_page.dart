@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/dummy_data.dart';
 import '../../widgets/home/home_app_bar.dart';
 import '../../widgets/home/home_search_bar.dart';
-import '../../widgets/home/saldo_card.dart';
+import '../../widgets/shared/saldo_card.dart';
 import '../../widgets/home/reward_card.dart';
 import '../../widgets/home/promo_banner.dart';
 import '../../widgets/home/catalog_section.dart';
@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: const HomeAppBar(),
+      appBar: const MainAppBar(),
       body: Stack(
         children: [
           // Scrollable content
@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const HomeSearchBar(),
+                HomeSearchBar(hintText: 'Cari galon atau gas...'),
                 const SizedBox(height: 16),
                 SaldoCard(
                   saldo: DummyData.saldoAbunemen,
@@ -71,6 +71,8 @@ class _HomePageState extends State<HomePage> {
         onTap: (index) {
           if (index == 0) {
             context.go('/home');
+          }else if (index == 1) {
+            context.go('/orders');
           } else if (index == 2) {
             context.go('/profile');
           } else if (index == 3) {

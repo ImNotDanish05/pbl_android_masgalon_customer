@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
-class LoginInputField extends StatelessWidget {
+class InputField extends StatelessWidget {
   final String label;
   final String hint;
   final TextEditingController controller;
@@ -10,8 +10,11 @@ class LoginInputField extends StatelessWidget {
   final Widget? suffixIcon;
   final Widget? labelTrailing;
   final String? Function(String?)? validator;
+  
+  // 1. TAMBAHKAN PARAMETER INI
+  final int maxLines;
 
-  const LoginInputField({
+  const InputField({
     super.key,
     required this.label,
     required this.hint,
@@ -21,6 +24,8 @@ class LoginInputField extends StatelessWidget {
     this.suffixIcon,
     this.labelTrailing,
     this.validator,
+    // 2. BERIKAN NILAI DEFAULT 1
+    this.maxLines = 1, 
   });
 
   @override
@@ -28,7 +33,6 @@ class LoginInputField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Label row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -46,12 +50,12 @@ class LoginInputField extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Input
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
           validator: validator,
+          maxLines: maxLines, // 3. MASUKKAN KE SINI
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(
@@ -75,8 +79,7 @@ class LoginInputField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide:
-                  const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+              borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -84,8 +87,7 @@ class LoginInputField extends StatelessWidget {
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide:
-                  const BorderSide(color: Colors.redAccent, width: 1.5),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
             ),
           ),
         ),

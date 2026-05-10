@@ -34,7 +34,7 @@ class _LoginFormState extends State<LoginForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Email field
-          LoginInputField(
+          InputField(
             label: 'MASUKKAN EMAIL',
             hint: 'nama@email.com',
             controller: widget.emailController,
@@ -55,7 +55,7 @@ class _LoginFormState extends State<LoginForm> {
           const SizedBox(height: 20),
 
           // Password field
-          LoginInputField(
+          InputField(
             label: 'PASSWORD',
             hint: '••••••••',
             controller: widget.passwordController,
@@ -132,7 +132,6 @@ class _LoginFormState extends State<LoginForm> {
   }
 }
 
-
 class RegisterForm extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController usernameController;
@@ -169,7 +168,7 @@ class _RegisterFormState extends State<RegisterForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // 1. Username field
-          LoginInputField(
+          InputField(
             label: 'Username',
             hint: 'Masukkan Username',
             controller: widget.usernameController,
@@ -192,8 +191,9 @@ class _RegisterFormState extends State<RegisterForm> {
               if (value == null || value.trim().isEmpty) {
                 return 'Email tidak boleh kosong';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                  .hasMatch(value.trim())) {
+              if (!RegExp(
+                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+              ).hasMatch(value.trim())) {
                 return 'Format email tidak valid';
               }
               return null;
@@ -202,7 +202,7 @@ class _RegisterFormState extends State<RegisterForm> {
           const SizedBox(height: 20),
 
           // 3. Password field
-          LoginInputField(
+          InputField(
             label: 'Kata Sandi',
             hint: 'Min. 8 karakter',
             controller: widget.passwordController,
@@ -210,7 +210,9 @@ class _RegisterFormState extends State<RegisterForm> {
             suffixIcon: GestureDetector(
               onTap: () => setState(() => _obscurePassword = !_obscurePassword),
               child: Icon(
-                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                _obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 size: 20,
                 color: AppColors.textGrey,
               ),
@@ -228,15 +230,19 @@ class _RegisterFormState extends State<RegisterForm> {
           const SizedBox(height: 20),
 
           // 4. Confirm Password field
-          LoginInputField(
+          InputField(
             label: 'Konfirmasi Kata Sandi',
             hint: 'Ulangi kata sandi',
             controller: widget.confirmPasswordController,
             obscureText: _obscureConfirmPassword,
             suffixIcon: GestureDetector(
-              onTap: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+              onTap: () => setState(
+                () => _obscureConfirmPassword = !_obscureConfirmPassword,
+              ),
               child: Icon(
-                _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                _obscureConfirmPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 size: 20,
                 color: AppColors.textGrey,
               ),

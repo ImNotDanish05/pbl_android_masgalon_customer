@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/dummy_data.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../../widgets/profile/profile_info_card.dart';
-import '../../widgets/profile/profile_saldo_card.dart';
+import '../../widgets/shared/saldo_card.dart';
 import '../../widgets/profile/voucher_section.dart';
 import '../../widgets/profile/address_section.dart';
 import '../../widgets/profile/menu_akun_section.dart';
@@ -33,10 +33,7 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Batal',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+            child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
           ),
           ElevatedButton(
             onPressed: () {
@@ -53,10 +50,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
-              'Keluar',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('Keluar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -94,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // Saldo Saya
             _SectionLabel(label: 'Saldo Saya'),
             const SizedBox(height: 10),
-            ProfileSaldoCard(
+            SaldoCard(
               saldo: DummyData.profile.saldo,
               onTap: () => context.push('/topup'),
             ),
@@ -125,6 +119,8 @@ class _ProfilePageState extends State<ProfilePage> {
             context.go('/home');
           } else if (index == 2) {
             context.go('/profile');
+          } else if (index == 1) {
+            context.go('/orders');
           } else if (index == 3) {
             context.go('/chat');
           }

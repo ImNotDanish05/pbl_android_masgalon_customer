@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../widgets/order/checkout_item_card.dart';
 import '../../data/dummy_data.dart';
 
@@ -98,13 +99,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     onIncrement: () => _incrementQuantity(index),
                     onDecrement: () => _decrementQuantity(index),
                   );
-                }).toList(),
+                }),
                 const SizedBox(height: 20),
                 // Total Tagihan Bar
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50.withOpacity(0.5),
+                    color: Colors.blue.shade50.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Row(
@@ -138,7 +139,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  context.pushNamed('confirm-order');
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0D63B3),
                   minimumSize: const Size(double.infinity, 55),

@@ -49,9 +49,11 @@ class _ChatPageState extends State<ChatPage> {
     // Filter by search
     if (_searchQuery.isNotEmpty) {
       chats = chats
-          .where((c) =>
-              c.kurirName.toLowerCase().contains(_searchQuery) ||
-              c.lastMessage.toLowerCase().contains(_searchQuery))
+          .where(
+            (c) =>
+                c.kurirName.toLowerCase().contains(_searchQuery) ||
+                c.lastMessage.toLowerCase().contains(_searchQuery),
+          )
           .toList();
     }
 
@@ -89,8 +91,7 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           // Search bar
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Container(
               height: 44,
               decoration: BoxDecoration(
@@ -102,8 +103,7 @@ class _ChatPageState extends State<ChatPage> {
                 decoration: const InputDecoration(
                   hintText: 'Cari pesan...',
                   hintStyle: TextStyle(color: Colors.grey, fontSize: 13),
-                  prefixIcon:
-                      Icon(Icons.search, color: Colors.grey, size: 20),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey, size: 20),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -124,11 +124,8 @@ class _ChatPageState extends State<ChatPage> {
                 ? _buildEmptyState()
                 : ListView.separated(
                     itemCount: _filteredChats.length,
-                    separatorBuilder: (context, index) => Divider(
-                      height: 1,
-                      color: Colors.grey[100],
-                      indent: 76,
-                    ),
+                    separatorBuilder: (context, index) =>
+                        Divider(height: 1, color: Colors.grey[100], indent: 76),
                     itemBuilder: (_, index) {
                       final chat = _filteredChats[index];
                       return ChatListItem(
@@ -137,8 +134,7 @@ class _ChatPageState extends State<ChatPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  ChatDetailPage(chat: chat),
+                              builder: (_) => ChatDetailPage(chat: chat),
                             ),
                           );
                         },
@@ -159,8 +155,11 @@ class _ChatPageState extends State<ChatPage> {
                     color: const Color(0xFFEBF2FF),
                     borderRadius: BorderRadius.circular(18),
                   ),
-                  child: const Icon(Icons.chat_bubble_outline,
-                      color: AppColors.darkBlue, size: 30),
+                  child: const Icon(
+                    Icons.chat_bubble_outline,
+                    color: AppColors.darkBlue,
+                    size: 30,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -188,6 +187,8 @@ class _ChatPageState extends State<ChatPage> {
         onTap: (i) {
           if (i == 0) {
             context.go('/home');
+          } else if (i == 1) {
+            context.go('/orders');
           } else if (i == 2) {
             context.go('/profile');
           } else if (i == 3) {

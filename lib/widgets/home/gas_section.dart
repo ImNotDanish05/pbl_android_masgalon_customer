@@ -21,7 +21,7 @@ class GasSection extends StatelessWidget {
         SectionHeader(
           title: 'Tabung Gas',
           subtitle: 'Kebutuhan dapur yang andal',
-          onLihatSemua: () {},
+          onActionTap:(){}
         ),
         const SizedBox(height: 14),
         ...products.map((product) => Padding(

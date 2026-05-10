@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
-class ProfileSaldoCard extends StatelessWidget {
+class SaldoCard extends StatelessWidget {
   final int saldo;
   final VoidCallback? onTap;
 
-  const ProfileSaldoCard({super.key, required this.saldo, this.onTap});
+  const SaldoCard({super.key, required this.saldo, this.onTap});
 
   String _formatRupiah(int value) {
     final str = value.toString();
