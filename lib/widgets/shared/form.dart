@@ -182,7 +182,7 @@ class _RegisterFormState extends State<RegisterForm> {
           const SizedBox(height: 20),
 
           // 2. Email field
-          LoginInputField(
+          InputField(
             label: 'Email',
             hint: 'contoh@email.com',
             controller: widget.emailController,
