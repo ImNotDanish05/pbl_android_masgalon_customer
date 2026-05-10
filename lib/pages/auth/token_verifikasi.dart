@@ -1,43 +1,68 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/constants/app_colors.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../services/supabase_client.dart';
+import '../../widgets/auth/auth_background.dart';
 import 'ganti_password.dart';
 
-class TokenVerificationScreen extends StatefulWidget {
-  const TokenVerificationScreen({super.key});
+final tokenVerifikasiLoadingProvider = StateProvider<bool>((ref) => false);
+final tokenVerifikasiErrorProvider = StateProvider<String?>((ref) => null);
+
+class TokenVerifikasiScreen extends ConsumerStatefulWidget {
+  final String email;
+
+  const TokenVerifikasiScreen({super.key, required this.email});
 
   @override
-  State<TokenVerificationScreen> createState() =>
-      _TokenVerificationScreenState();
+  ConsumerState<TokenVerifikasiScreen> createState() =>
+      _TokenVerifikasiScreenState();
 }
 
-class _TokenVerificationScreenState extends State<TokenVerificationScreen> {
-  final List<TextEditingController> _controllers = List.generate(
-    6,
-    (_) => TextEditingController(),
-  );
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+class _TokenVerifikasiScreenState extends ConsumerState<TokenVerifikasiScreen>
+    with SingleTickerProviderStateMixin {
+  late final List<TextEditingController> _controllers;
+  late final List<FocusNode> _focusNodes;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   for (var i = 0; i < _focusNodes.length; i++) {
-  //     _focusNodes[i].addListener(() {
-  //       if (_focusNodes[i].hasFocus) {
-  //         final firstEmpty = _controllers.indexWhere(
-  //           (controller) => controller.text.isEmpty,
-  //         );
-  //         if (firstEmpty >= 0 && firstEmpty < i) {
-  //           FocusScope.of(context).requestFocus(_focusNodes[firstEmpty]);
-  //         }
-  //       }
-  //     });
-  //   }
-  // }
+  late AnimationController _shakeController;
+  late Animation<double> _shakeAnimation;
+
+  bool _canResend = false;
+  int _resendCountdown = 60;
+  Timer? _resendTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(8, (_) => TextEditingController());
+    _focusNodes = List.generate(8, (_) => FocusNode());
+
+    _shakeController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _shakeAnimation = Tween<double>(
+      begin: 0,
+      end: 24,
+    ).chain(CurveTween(curve: Curves.elasticIn)).animate(_shakeController);
+
+    _startResendTimer();
+
+    // Fokus ke kotak pertama saat halaman dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNodes[0].requestFocus();
+    });
+  }
 
   @override
   void dispose() {
+    _shakeController.dispose();
+    _resendTimer?.cancel();
     for (final controller in _controllers) {
       controller.dispose();
     }
@@ -47,76 +72,199 @@ class _TokenVerificationScreenState extends State<TokenVerificationScreen> {
     super.dispose();
   }
 
-  void _onChanged(String value, int index) {
-  if (value.isEmpty) return;
+  Future<void> _verifyToken() async {
+    ref.read(tokenVerifikasiErrorProvider.notifier).state = null;
 
-  final firstEmpty = _controllers.indexWhere(
-    (controller) => controller.text.isEmpty,
-  );
-
-  if (firstEmpty != -1 && index > firstEmpty) {
-    _controllers[index].clear();
-    return;
-  }
-
-  if (value.length > 1) {
-    final chars = value.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
-    for (var offset = 0;
-        offset < chars.length && index + offset < _controllers.length;
-        offset++) {
-      _controllers[index + offset].text = chars[offset];
+    final token = _controllers.map((controller) => controller.text).join();
+    if (token.length != 8) {
+      ref.read(tokenVerifikasiErrorProvider.notifier).state =
+          'Masukkan 8 digit token yang dikirim ke email Anda.';
+      return;
     }
 
-    final nextIndex =
-        (index + chars.length).clamp(0, _controllers.length - 1);
-    FocusScope.of(context).requestFocus(_focusNodes[nextIndex]);
-    return;
+    ref.read(tokenVerifikasiLoadingProvider.notifier).state = true;
+
+    try {
+      await supabase.auth.verifyOTP(
+        email: widget.email,
+        token: token,
+        type: OtpType.recovery,
+      );
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const GantiPasswordScreen()),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ref.read(tokenVerifikasiErrorProvider.notifier).state = _authErrorMessage(
+        e.message,
+      );
+      _shakeController.forward(from: 0);
+      for (final c in _controllers) {
+        c.clear();
+      }
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) _focusNodes[0].requestFocus();
+      });
+    } on SocketException {
+      if (!mounted) return;
+      ref.read(tokenVerifikasiErrorProvider.notifier).state =
+          'Tidak dapat terhubung ke jaringan. Periksa koneksi internet Anda.';
+    } catch (_) {
+      if (!mounted) return;
+      ref.read(tokenVerifikasiErrorProvider.notifier).state =
+          'Terjadi kesalahan saat memverifikasi token. Coba lagi.';
+    } finally {
+      if (mounted) {
+        ref.read(tokenVerifikasiLoadingProvider.notifier).state = false;
+      }
+    }
   }
 
-  if (index + 1 < _focusNodes.length) {
-    FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
-  } else {
-    _focusNodes[index].unfocus();
+  String _authErrorMessage(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('expired')) {
+      return 'Token sudah kedaluwarsa. Minta token baru lalu coba lagi.';
+    }
+    if (lower.contains('invalid') ||
+        lower.contains('otp') ||
+        lower.contains('token')) {
+      return 'Token salah. Periksa kembali 8 digit token Anda.';
+    }
+    if (lower.contains('rate') || lower.contains('too many')) {
+      return 'Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.';
+    }
+    return message.isNotEmpty ? message : 'Token tidak dapat diverifikasi.';
   }
-} // ← INI WAJIB ADA
+
+  void _handleOtpChanged(String value, int index) {
+    ref.read(tokenVerifikasiErrorProvider.notifier).state = null;
+
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 1) {
+      _fillPastedToken(digits);
+      return;
+    }
+
+    if (digits.isEmpty) {
+      _controllers[index].clear();
+      if (index > 0) {
+        _focusNodes[index - 1].requestFocus();
+      }
+      return;
+    }
+
+    _controllers[index].text = digits;
+    _controllers[index].selection = TextSelection.collapsed(offset: 1);
+
+    if (index == _controllers.length - 1) {
+      _focusNodes[index].unfocus();
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) _verifyToken();
+      });
+      return;
+    }
+
+    // Loncat ke kotak berikutnya
+    _focusNodes[index + 1].requestFocus();
+  }
+
+  void _fillPastedToken(String digits) {
+    final tokenDigits = digits.substring(0, digits.length.clamp(0, 8));
+    for (var i = 0; i < _controllers.length; i++) {
+      _controllers[i].text = i < tokenDigits.length ? tokenDigits[i] : '';
+    }
+
+    if (tokenDigits.length == 8) {
+      _focusNodes.last.unfocus();
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) _verifyToken();
+      });
+    } else {
+      _focusNodes[tokenDigits.length].requestFocus();
+    }
+  }
+
+  void _startResendTimer() {
+    setState(() {
+      _canResend = false;
+      _resendCountdown = 60;
+    });
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_resendCountdown > 0) {
+          _resendCountdown--;
+        } else {
+          _canResend = true;
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  Future<void> _resendToken() async {
+    if (!_canResend) return;
+    try {
+      await supabase.auth.resetPasswordForEmail(widget.email);
+      _startResendTimer();
+      for (final c in _controllers) {
+        c.clear();
+      }
+      if (mounted) _focusNodes[0].requestFocus();
+    } catch (_) {
+      if (mounted) {
+        ref.read(tokenVerifikasiErrorProvider.notifier).state =
+            'Gagal mengirim ulang token. Coba lagi.';
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+    final isLoading = ref.watch(tokenVerifikasiLoadingProvider);
+    final errorMessage = ref.watch(tokenVerifikasiErrorProvider);
+
+    return AuthBackground(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
               Row(
                 children: [
                   IconButton(
+                    onPressed: isLoading ? null : () => Navigator.pop(context),
                     icon: const Icon(
                       Icons.arrow_back,
-                      color: AppColors.darkBlue,
+                      color: Color(0xFF0D52A1),
                     ),
-                    onPressed: () => Navigator.pop(context),
                   ),
                   Text(
                     'Verifikasi Token',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.darkBlue,
+                      color: const Color(0xFF0D52A1),
                     ),
                   ),
                 ],
               ),
-              const Spacer(),
+              const SizedBox(height: 32),
               Container(
-                padding: const EdgeInsets.all(32),
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withAlpha(13),
+                      color: Colors.blue.withValues(alpha: 0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -126,12 +274,12 @@ class _TokenVerificationScreenState extends State<TokenVerificationScreen> {
                   children: [
                     const Icon(
                       Icons.mark_email_read_outlined,
-                      size: 48,
-                      color: AppColors.darkBlue,
+                      size: 52,
+                      color: Color(0xFF0D52A1),
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Verifikasi Token',
+                      'Masukkan Token',
                       style: GoogleFonts.poppins(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -140,7 +288,7 @@ class _TokenVerificationScreenState extends State<TokenVerificationScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Masukkan 6 digit token yang sudah dikirim ke email Anda untuk melanjutkan pengaturan ulang.',
+                      'Token 8 digit telah dikirim ke ${widget.email}.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
@@ -149,125 +297,188 @@ class _TokenVerificationScreenState extends State<TokenVerificationScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(
-                        6,
-                        (index) => SizedBox(
-                          width: 48,
-                          height: 60,
-                          child: KeyboardListener(
-                            focusNode:
-                                FocusNode(), // Focus node ekstra untuk mendeteksi event keyboard
-                            onKeyEvent: (KeyEvent event) {
-                              // Deteksi jika tombol ditekan (bukan dilepas) dan tombol itu adalah Backspace
-                              if (event is KeyDownEvent &&
-                                  event.logicalKey ==
-                                      LogicalKeyboardKey.backspace) {
-                                if (_controllers[index].text.isNotEmpty) {
-                                  // Hapus isi di box sekarang
-                                  _controllers[index].clear();
-                                } else if (index > 0) {
-                                  // Pindah ke kiri dan hapus
-                                  FocusScope.of(
-                                    context,
-                                  ).requestFocus(_focusNodes[index - 1]);
-                                  _controllers[index - 1].clear();
-                                }
-                              }
-                            },
-                            child: TextFormField(
-                              controller: _controllers[index],
-                              focusNode: _focusNodes[index],
-                              textAlign: TextAlign.center,
-                              keyboardType: TextInputType.text,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                  RegExp(r'[a-zA-Z0-9]'),
-                                ),
-                              ],
-                              maxLength: 1,
-                              textInputAction: index < 5
-                                  ? TextInputAction.next
-                                  : TextInputAction.done,
-                              decoration: InputDecoration(
-                                counterText: '',
-                                filled: true,
-                                fillColor: Colors.grey[50],
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide.none,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade200,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.darkBlue,
-                                  ),
-                                ),
-                              ),
-                              onTap: () {},
-                              onChanged: (value) => _onChanged(value, index),
-                            ),
+                    AnimatedBuilder(
+                      animation: _shakeAnimation,
+                      builder: (context, child) {
+                        return Transform.translate(
+                          offset: Offset(
+                            _shakeAnimation.value *
+                                ((_shakeController.value < 0.5) ? 1 : -1),
+                            0,
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ResetPasswordScreen(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.darkBlue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Verifikasi Token',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                          child: child,
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(
+                          8, //perubahan jumlah kotak
+                          (index) => _OtpBox(
+                            controller: _controllers[index],
+                            focusNode: _focusNodes[index],
+                            enabled: !isLoading,
+                            onChanged: (value) =>
+                                _handleOtpChanged(value, index),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'Tidak menerima kode?',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    Center(
+                      child: _canResend
+                          ? TextButton(
+                              onPressed: _resendToken,
+                              child: const Text(
+                                'Kirim Ulang Token',
+                                style: TextStyle(
+                                  color: Color(0xFF0D52A1),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              'Kirim ulang dalam $_resendCountdown detik',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[500],
+                              ),
+                            ),
                     ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text(
-                        'Kirim Ulang Kode',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.darkBlue,
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      _ErrorBox(message: errorMessage),
+                    ],
+                    const SizedBox(height: 28),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : _verifyToken,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0D52A1),
+                          disabledBackgroundColor: const Color(
+                            0xFF0D52A1,
+                          ).withValues(alpha: 0.6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Verifikasi Token',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const Spacer(),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class TokenVerificationScreen extends TokenVerifikasiScreen {
+  const TokenVerificationScreen({super.key, required super.email});
+}
+
+class _OtpBox extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final bool enabled;
+  final ValueChanged<String> onChanged;
+
+  const _OtpBox({
+    required this.controller,
+    required this.focusNode,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 44,
+      height: 52,
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        enabled: enabled,
+        textAlign: TextAlign.center,
+        keyboardType: TextInputType.number,
+        textInputAction: TextInputAction.next,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(8),
+        ],
+        style: GoogleFonts.poppins(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Colors.black87,
+        ),
+        decoration: InputDecoration(
+          counterText: '',
+          filled: true,
+          fillColor: Colors.grey[50],
+          contentPadding: EdgeInsets.zero,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF0D52A1), width: 1.5),
+          ),
+        ),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+class _ErrorBox extends StatelessWidget {
+  final String message;
+
+  const _ErrorBox({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade400, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: Colors.red.shade600, fontSize: 13),
+            ),
+          ),
+        ],
       ),
     );
   }

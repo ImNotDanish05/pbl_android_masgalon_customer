@@ -1,23 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:getwidget/getwidget.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/supabase_client.dart';
 import '../../widgets/shared/header.dart';
 import '../../widgets/auth/login_welcome_section.dart';
 import '../../widgets/shared/form.dart';
 import '../../widgets/shared/bottom_navbar.dart';
+import '../home/home_page.dart';
+import 'lupa_password.dart';
+import 'registrasi.dart';
 
-class LoginPage extends StatefulWidget {
+// ================================================
+// PROVIDERS — loading & error state
+// ================================================
+final loginPageLoadingProvider = StateProvider<bool>((ref) => false);
+final loginPageErrorProvider = StateProvider<String?>((ref) => null);
+
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
   int _selectedTabIndex = 0;
 
   @override
@@ -28,25 +38,101 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleLogin() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() => _isLoading = false);
+    // Clear previous error
+    ref.read(loginPageErrorProvider.notifier).state = null;
 
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // 1. Validate empty fields
+    if (email.isEmpty || password.isEmpty) {
+      ref.read(loginPageErrorProvider.notifier).state =
+          'Email dan password tidak boleh kosong.';
+      return;
+    }
+
+    ref.read(loginPageLoadingProvider.notifier).state = true;
+
+    try {
+      // 2. Sign in with Supabase
+      final response = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (response.user == null) {
+        ref.read(loginPageErrorProvider.notifier).state =
+            'Login gagal. Coba lagi.';
+        return;
+      }
+
+      // 3. Check role from users table — must be 'Customer'
+      final userData = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', response.user!.id)
+          .single();
+
+      final role = userData['role'] as String?;
+
+      // 4. If role != 'Customer' → signOut + show error
+      if (role != 'Customer') {
+        await supabase.auth.signOut();
+        if (!mounted) return;
+        ref.read(loginPageErrorProvider.notifier).state =
+            'Akun ini bukan akun customer.';
+        return;
+      }
+
+      // 5. If success → navigate to HomePage
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+        (route) => false,
+      );
+    } on AuthException catch (e) {
+      // 6. Catch AuthException → show error in Bahasa Indonesia
+      if (!mounted) return;
+      ref.read(loginPageErrorProvider.notifier).state =
+          _translateAuthError(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      ref.read(loginPageErrorProvider.notifier).state =
+          'Terjadi kesalahan. Periksa koneksi internet dan coba lagi.';
+    } finally {
       if (mounted) {
-        GFToast.showToast(
-          'Berhasil masuk! Selamat datang kembali.',
-          context,
-          toastPosition: GFToastPosition.BOTTOM,
-          backgroundColor: AppColors.primaryBlue,
-          textStyle: const TextStyle(color: Colors.white, fontSize: 14),
-        );
+        ref.read(loginPageLoadingProvider.notifier).state = false;
       }
     }
   }
 
+  String _translateAuthError(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('invalid login') ||
+        lower.contains('invalid credentials') ||
+        lower.contains('email not confirmed')) {
+      return 'Email atau password salah. Periksa kembali dan coba lagi.';
+    }
+    if (lower.contains('user not found')) {
+      return 'Akun tidak ditemukan. Pastikan email sudah terdaftar.';
+    }
+    if (lower.contains('network') ||
+        lower.contains('connection') ||
+        lower.contains('socket')) {
+      return 'Tidak dapat terhubung. Periksa koneksi internet kamu.';
+    }
+    if (lower.contains('rate') || lower.contains('too many')) {
+      return 'Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.';
+    }
+    return message.isNotEmpty ? message : 'Login gagal. Coba lagi.';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(loginPageLoadingProvider);
+    final errorMessage = ref.watch(loginPageErrorProvider);
+
     return Scaffold(
       backgroundColor: AppColors.bgColor,
       body: SafeArea(
@@ -65,10 +151,38 @@ class _LoginPageState extends State<LoginPage> {
                       formKey: _formKey,
                       emailController: _emailController,
                       passwordController: _passwordController,
-                      isLoading: _isLoading,
+                      isLoading: isLoading,
                       onLogin: _handleLogin,
                     ),
-                    const SizedBox(height: 20),
+                    // Error box below the form
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      _ErrorBox(message: errorMessage),
+                    ],
+                    const SizedBox(height: 12),
+                    // "Lupa kata sandi?" link
+                    Center(
+                      child: TextButton(
+                        onPressed: isLoading
+                            ? null
+                            : () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const LupaPasswordScreen(),
+                                  ),
+                                ),
+                        child: const Text(
+                          'Lupa kata sandi?',
+                          style: TextStyle(
+                            color: AppColors.primaryBlue,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     _buildSignUpRow(),
                     const SizedBox(height: 40),
                     const SizedBox(height: 32),
@@ -80,7 +194,10 @@ class _LoginPageState extends State<LoginPage> {
               selectedIndex: _selectedTabIndex,
               onTabChanged: (index) {
                 if (index == 1) {
-                  Navigator.pushReplacementNamed(context, '/register');
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterPage()),
+                  );
                 } else {
                   setState(() => _selectedTabIndex = index);
                 }
@@ -101,7 +218,10 @@ class _LoginPageState extends State<LoginPage> {
           style: TextStyle(fontSize: 14, color: AppColors.textGrey),
         ),
         GestureDetector(
-          onTap: () => Navigator.pushReplacementNamed(context, '/register'),
+          onTap: () => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const RegisterPage()),
+          ),
           child: const Text(
             'Daftar',
             style: TextStyle(
@@ -112,6 +232,35 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ErrorBox extends StatelessWidget {
+  final String message;
+  const _ErrorBox({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade400, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: Colors.red.shade600, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

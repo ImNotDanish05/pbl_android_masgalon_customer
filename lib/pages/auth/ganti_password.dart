@@ -1,143 +1,322 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/constants/app_colors.dart';
+import 'package:password_strength/password_strength.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../services/supabase_client.dart';
+import '../../widgets/auth/auth_background.dart';
 import 'success_screen.dart';
 
-class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+final gantiPasswordLoadingProvider = StateProvider<bool>((ref) => false);
+final gantiPasswordErrorProvider = StateProvider<String?>((ref) => null);
+
+class GantiPasswordScreen extends ConsumerStatefulWidget {
+  const GantiPasswordScreen({super.key});
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  ConsumerState<GantiPasswordScreen> createState() =>
+      _GantiPasswordScreenState();
 }
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  bool _isObscure1 = true;
-  bool _isObscure2 = true;
+class _GantiPasswordScreenState extends ConsumerState<GantiPasswordScreen> {
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
-  bool _hasUppercase = false;
-  bool _hasNumber = false;
-  bool _hasSymbol = false;
+  bool _isPasswordHidden = true;
+  bool _isConfirmPasswordHidden = true;
+  double _passwordStrength = 0.0;
 
-  void _checkPassword(String value) {
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_updatePasswordStrength);
+  }
+
+  void _updatePasswordStrength() {
     setState(() {
-      _hasUppercase = value.contains(RegExp(r'[A-Z]'));
-      _hasNumber = value.contains(RegExp(r'[0-9]'));
-      _hasSymbol = value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+      _passwordStrength = estimatePasswordStrength(_passwordController.text);
     });
   }
 
   @override
-  Widget build(BuildContext context) {
-    int strengthCount = (_hasUppercase ? 1 : 0) + (_hasNumber ? 1 : 0) + (_hasSymbol ? 1 : 0);
-    String strengthText = strengthCount == 0 ? "Lemah" : strengthCount == 1 ? "Sedang" : strengthCount == 2 ? "Kuat" : "Sangat Kuat";
-    Color strengthColor = strengthCount <= 1 ? Colors.red : strengthCount == 2 ? Colors.orange : Colors.green;
+  void dispose() {
+    _passwordController.removeListener(_updatePasswordStrength);
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
-    return Scaffold(
-      backgroundColor: AppColors.bgColor,
-      body: SafeArea(
+  Future<void> _saveNewPassword() async {
+    ref.read(gantiPasswordErrorProvider.notifier).state = null;
+
+    final newPassword = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (newPassword.isEmpty || confirmPassword.isEmpty) {
+      ref.read(gantiPasswordErrorProvider.notifier).state =
+          'Password baru dan konfirmasi password tidak boleh kosong.';
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      ref.read(gantiPasswordErrorProvider.notifier).state =
+          'Password baru minimal harus 8 karakter.';
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      ref.read(gantiPasswordErrorProvider.notifier).state =
+          'Konfirmasi password tidak sama dengan password baru.';
+      return;
+    }
+
+    ref.read(gantiPasswordLoadingProvider.notifier).state = true;
+
+    try {
+      await supabase.auth.updateUser(UserAttributes(password: newPassword));
+
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const SuccessScreen()),
+        (route) => false,
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ref.read(gantiPasswordErrorProvider.notifier).state = _authErrorMessage(
+        e.message,
+      );
+    } on SocketException {
+      if (!mounted) return;
+      ref.read(gantiPasswordErrorProvider.notifier).state =
+          'Tidak dapat terhubung ke jaringan. Periksa koneksi internet Anda.';
+    } catch (_) {
+      if (!mounted) return;
+      ref.read(gantiPasswordErrorProvider.notifier).state =
+          'Terjadi kesalahan saat menyimpan password baru. Coba lagi.';
+    } finally {
+      if (mounted) {
+        ref.read(gantiPasswordLoadingProvider.notifier).state = false;
+      }
+    }
+  }
+
+  String _authErrorMessage(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('session') || lower.contains('jwt')) {
+      return 'Sesi pemulihan sudah berakhir. Ulangi proses lupa password.';
+    }
+    if (lower.contains('password')) {
+      return 'Password baru belum memenuhi ketentuan keamanan.';
+    }
+    if (lower.contains('network') ||
+        lower.contains('connection') ||
+        lower.contains('socket')) {
+      return 'Tidak dapat terhubung ke jaringan. Periksa koneksi internet Anda.';
+    }
+    return message.isNotEmpty
+        ? message
+        : 'Gagal menyimpan password baru. Coba lagi.';
+  }
+
+  Widget _buildPasswordStrengthIndicator() {
+    String label = '';
+    Color barColor = Colors.red;
+
+    if (_passwordController.text.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (_passwordStrength < 0.34) {
+      label = 'Tidak Aman';
+      barColor = Colors.red;
+    } else if (_passwordStrength < 0.67) {
+      label = 'Sedang';
+      barColor = Colors.orange;
+    } else {
+      label = 'Aman';
+      barColor = Colors.green;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          height: 6,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade300,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: _passwordStrength * MediaQuery.of(context).size.width * 0.55,
+            decoration: BoxDecoration(
+              color: barColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: barColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLoading = ref.watch(gantiPasswordLoadingProvider);
+    final errorMessage = ref.watch(gantiPasswordErrorProvider);
+
+    return AuthBackground(
+      child: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppColors.darkBlue),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: isLoading ? null : () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF0D52A1),
+                    ),
                   ),
-                  Text('Atur Ulang Sandi', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: AppColors.darkBlue)),
+                  Text(
+                    'Ganti Password',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF0D52A1),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
               Container(
-                padding: const EdgeInsets.all(32),
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withValues(alpha: 0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Atur Ulang\nKeamanan Akun', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87, height: 1.2)),
-                    const SizedBox(height: 12),
-                    Text('Demi keamanan, buat kata sandi baru yang kuat untuk memudahkan akses.', style: TextStyle(fontSize: 13, color: Colors.grey[600], height: 1.5)),
+                    const Center(
+                      child: Icon(
+                        Icons.password_outlined,
+                        size: 52,
+                        color: Color(0xFF0D52A1),
+                      ),
+                    ),
                     const SizedBox(height: 24),
-                    Text('Kata Sandi Baru', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[800])),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      obscureText: _isObscure1,
-                      onChanged: _checkPassword,
-                      decoration: InputDecoration(
-                        hintText: 'Min. 8 Karakter',
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        suffixIcon: IconButton(
-                          icon: Icon(_isObscure1 ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
-                          onPressed: () => setState(() => _isObscure1 = !_isObscure1),
+                    Center(
+                      child: Text(
+                        'Buat Password Baru',
+                        style: GoogleFonts.poppins(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        'Gunakan minimal 8 karakter agar akunmu tetap aman.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildLabel('PASSWORD BARU'),
+                    const SizedBox(height: 8),
+                    _PasswordField(
+                      controller: _passwordController,
+                      hint: 'Minimal 8 karakter',
+                      obscureText: _isPasswordHidden,
+                      enabled: !isLoading,
+                      textInputAction: TextInputAction.next,
+                      onToggle: () => setState(
+                        () => _isPasswordHidden = !_isPasswordHidden,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('KEKUATAN SANDI', style: TextStyle(fontSize: 10, color: Colors.grey[500], fontWeight: FontWeight.bold)),
-                        Text(strengthText, style: TextStyle(fontSize: 12, color: strengthColor, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
+                    _buildPasswordStrengthIndicator(),
+                    const SizedBox(height: 12),
+                    _buildLabel('KONFIRMASI PASSWORD BARU'),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(child: Container(height: 4, decoration: BoxDecoration(color: strengthCount >= 1 ? strengthColor : Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
-                        const SizedBox(width: 4),
-                        Expanded(child: Container(height: 4, decoration: BoxDecoration(color: strengthCount >= 2 ? strengthColor : Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
-                        const SizedBox(width: 4),
-                        Expanded(child: Container(height: 4, decoration: BoxDecoration(color: strengthCount == 3 ? strengthColor : Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text('Konfirmasi Kata Sandi Baru', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[800])),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      obscureText: _isObscure2,
-                      decoration: InputDecoration(
-                        hintText: 'Ulangi kata sandi',
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        suffixIcon: IconButton(
-                          icon: Icon(_isObscure2 ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
-                          onPressed: () => setState(() => _isObscure2 = !_isObscure2),
-                        ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    _PasswordField(
+                      controller: _confirmPasswordController,
+                      hint: 'Ulangi password baru',
+                      obscureText: _isConfirmPasswordHidden,
+                      enabled: !isLoading,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) {
+                        if (!isLoading) _saveNewPassword();
+                      },
+                      onToggle: () => setState(
+                        () => _isConfirmPasswordHidden =
+                            !_isConfirmPasswordHidden,
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildConditionItem('Huruf Besar', _hasUppercase),
-                        const SizedBox(width: 8),
-                        _buildConditionItem('Angka', _hasNumber),
-                        const SizedBox(width: 8),
-                        _buildConditionItem('Simbol (@#)', _hasSymbol),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      _ErrorBox(message: errorMessage),
+                    ],
+                    const SizedBox(height: 28),
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const SuccessScreen()));
-                        },
+                        onPressed: isLoading ? null : _saveNewPassword,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.darkBlue,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          backgroundColor: const Color(0xFF0D52A1),
+                          disabledBackgroundColor: const Color(
+                            0xFF0D52A1,
+                          ).withValues(alpha: 0.6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: const Text('Simpan & Masuk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Simpan Password Baru',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -150,13 +329,113 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     );
   }
 
-  Widget _buildConditionItem(String text, bool isMet) {
-    return Row(
-      children: [
-        Icon(isMet ? Icons.check_circle : Icons.radio_button_unchecked, size: 14, color: isMet ? Colors.green : Colors.grey),
-        const SizedBox(width: 4),
-        Text(text, style: TextStyle(fontSize: 10, color: isMet ? Colors.green : Colors.grey)),
-      ],
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+}
+
+class ResetPasswordScreen extends GantiPasswordScreen {
+  const ResetPasswordScreen({super.key});
+}
+
+class _PasswordField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool obscureText;
+  final bool enabled;
+  final TextInputAction textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final VoidCallback onToggle;
+
+  const _PasswordField({
+    required this.controller,
+    required this.hint,
+    required this.obscureText,
+    required this.enabled,
+    required this.textInputAction,
+    required this.onToggle,
+    this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      enabled: enabled,
+      obscureText: obscureText,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onSubmitted,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+        prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400], size: 20),
+        suffixIcon: IconButton(
+          onPressed: enabled ? onToggle : null,
+          icon: Icon(
+            obscureText
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
+            color: Colors.grey[400],
+            size: 20,
+          ),
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF0D52A1)),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorBox extends StatelessWidget {
+  final String message;
+
+  const _ErrorBox({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade400, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: Colors.red.shade600, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -37,7 +37,8 @@ class AppRouter {
       GoRoute(
         path: '/token-verification',
         name: 'token-verification',
-        builder: (context, state) => const TokenVerificationScreen(),
+        builder: (context, state) =>
+            const TokenVerificationScreen(email: ''),
       ),
       GoRoute(
         path: '/change-password',
