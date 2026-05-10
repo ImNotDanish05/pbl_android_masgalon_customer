@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/supabase_client.dart';
 
 // Model data customer yang sedang login
 class AuthCustomer {

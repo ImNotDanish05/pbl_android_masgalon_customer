@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/supabase_client.dart';
@@ -9,9 +10,6 @@ import '../../widgets/shared/header.dart';
 import '../../widgets/auth/login_welcome_section.dart';
 import '../../widgets/shared/form.dart';
 import '../../widgets/shared/bottom_navbar.dart';
-import '../home/home_page.dart';
-import 'lupa_password.dart';
-import 'registrasi.dart';
 
 // ================================================
 // PROVIDERS — loading & error state
@@ -103,11 +101,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
       // 7. Navigate to HomePage
       if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-        (route) => false,
-      );
+      context.go('/home');
     } on AuthException catch (e) {
       // Catch AuthException → show error in Bahasa Indonesia
       if (!mounted) return;
@@ -190,13 +184,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       child: TextButton(
                         onPressed: isLoading
                             ? null
-                            : () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        const LupaPasswordScreen(),
-                                  ),
-                                ),
+                            : () => context.push('/forgot-password'),
                         child: const Text(
                           'Lupa kata sandi?',
                           style: TextStyle(
@@ -219,10 +207,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               selectedIndex: _selectedTabIndex,
               onTabChanged: (index) {
                 if (index == 1) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RegisterPage()),
-                  );
+                  context.go('/register');
                 } else {
                   setState(() => _selectedTabIndex = index);
                 }
@@ -243,10 +228,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           style: TextStyle(fontSize: 14, color: AppColors.textGrey),
         ),
         GestureDetector(
-          onTap: () => Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const RegisterPage()),
-          ),
+          onTap: () => context.go('/register'),
           child: const Text(
             'Daftar',
             style: TextStyle(

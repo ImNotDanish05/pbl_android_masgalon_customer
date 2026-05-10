@@ -2,14 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/supabase_client.dart';
 import '../../widgets/shared/header.dart';
 import '../../widgets/shared/bottom_navbar.dart';
 import '../../widgets/shared/form.dart';
-import 'login_page.dart';
-import 'registrasi_token_verifikasi.dart';
 
 // ================================================
 // PROVIDERS — loading & error state
@@ -114,15 +113,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       );
 
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => RegistrasiTokenVerifikasiScreen(
-            email: email,
-            username: username,
-          ),
-        ),
-      );
+      context.go('/register/verify', extra: {
+        'email': email,
+        'username': username,
+      });
     } on AuthException catch (e) {
       if (!mounted) return;
       ref.read(registrasiErrorProvider.notifier).state =
@@ -234,11 +228,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const LoginPage()),
-                          ),
+                          onTap: () => context.go('/login'),
                           child: const Text(
                             'Masuk',
                             style: TextStyle(
@@ -260,10 +250,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               selectedIndex: _selectedTabIndex,
               onTabChanged: (index) {
                 if (index == 0) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginPage()),
-                  );
+                  context.go('/login');
                 } else {
                   setState(() => _selectedTabIndex = index);
                 }
