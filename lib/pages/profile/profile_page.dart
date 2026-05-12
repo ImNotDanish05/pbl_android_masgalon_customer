@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/dummy_data.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/supabase_client.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../../widgets/profile/profile_info_card.dart';
 import '../../widgets/shared/saldo_card.dart';
@@ -10,50 +13,81 @@ import '../../widgets/profile/address_section.dart';
 import '../../widgets/profile/menu_akun_section.dart';
 import '../auth/login_page.dart';
 
-class ProfilePage extends StatefulWidget {
+class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends ConsumerState<ProfilePage> {
   int _currentNavIndex = 2;
 
-  void _handleKeluar() {
-    showDialog(
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final customer = ref.read(authCustomerProvider);
+      debugPrint('========================================');
+      debugPrint('👤 PROFILE PAGE DIBUKA');
+      debugPrint('App masih kenal user ini:');
+      debugPrint('ID       : ${customer?.id}');
+      debugPrint('Email    : ${customer?.email}');
+      debugPrint('Username : ${customer?.username}');
+      debugPrint('Saldo    : Rp ${customer?.saldoAbunemen}');
+      debugPrint('========================================');
+    });
+  }
+
+  void _handleKeluar() async {
+    // Confirmation dialog
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Keluar',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
+        title: const Text('Keluar'),
         content: const Text('Apakah kamu yakin ingin keluar dari akun ini?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-                (route) => false,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
             ),
-            child: const Text('Keluar', style: TextStyle(color: Colors.white)),
+            child: const Text('Keluar'),
           ),
         ],
       ),
+    );
+
+    if (confirm != true) return;
+
+    // Debug print
+    debugPrint('========================================');
+    debugPrint('🚪 CUSTOMER LOGOUT');
+    debugPrint('User yang logout:');
+    debugPrint('Username : ${ref.read(authCustomerProvider)?.username}');
+    debugPrint('Email    : ${ref.read(authCustomerProvider)?.email}');
+    debugPrint('========================================');
+
+    // Clear session
+    await supabase.auth.signOut();
+    ref.read(authCustomerProvider.notifier).state = null;
+
+    debugPrint('✅ Session cleared, navigating to LoginPage');
+
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LoginPage(),
+      ),
+      (route) => false,
     );
   }
 

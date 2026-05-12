@@ -99,6 +99,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         saldoAbunemen: customerData['saldo_abunemen'] as int? ?? 0,
       );
 
+      final loggedCustomer = ref.read(authCustomerProvider);
+      debugPrint('========================================');
+      debugPrint('✅ LOGIN BERHASIL');
+      debugPrint('ID       : ${loggedCustomer?.id}');
+      debugPrint('Email    : ${loggedCustomer?.email}');
+      debugPrint('Username : ${loggedCustomer?.username}');
+      debugPrint('Saldo    : ${loggedCustomer?.saldoAbunemen}');
+      debugPrint('========================================');
+
       // 7. Navigate to HomePage
       if (!mounted) return;
       context.go('/home');

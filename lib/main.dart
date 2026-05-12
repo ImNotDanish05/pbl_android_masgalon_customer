@@ -227,6 +227,15 @@ class _StartupPageState extends ConsumerState<_StartupPage> {
         saldoAbunemen: customerData['saldo_abunemen'] as int? ?? 0,
       );
 
+      final restoredCustomer = ref.read(authCustomerProvider);
+      debugPrint('========================================');
+      debugPrint('🔄 SESSION RESTORED');
+      debugPrint('ID       : ${restoredCustomer?.id}');
+      debugPrint('Email    : ${restoredCustomer?.email}');
+      debugPrint('Username : ${restoredCustomer?.username}');
+      debugPrint('Saldo    : ${restoredCustomer?.saldoAbunemen}');
+      debugPrint('========================================');
+
       if (!mounted) return;
       AppRouter.router.go('/home');
     } catch (_) {
