@@ -119,7 +119,7 @@ class OrderHistoryCard extends StatelessWidget {
               if (order.repeatable)
                 OutlinedButton(
                   onPressed: () {
-                    GoRouter.of(context).goNamed('confirm-order');
+                    context.push('/confirm-order');
                   },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.primaryBlue),

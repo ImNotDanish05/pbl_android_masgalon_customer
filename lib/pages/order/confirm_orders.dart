@@ -59,9 +59,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
             ConfirmAddressSection(
               address: ConfirmOrderDummy.address,
               onEdit: () {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Ubah alamat')));
+                context.push('/profile/edit');
               },
             ),
             const SizedBox(height: 16),

@@ -21,8 +21,8 @@ class ConfirmOrderDummy {
       'subtitle': 'Saldo akunemen yang sudah terkumpul',
     },
     'Kartu': {
-      'title': 'Kartu Debit/Kredit',
-      'subtitle': 'Visa, Mastercard, dan lainnya',
+      'title': 'COD',
+      'subtitle': 'Bayar ditempat',
     },
   };
 }
