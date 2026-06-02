@@ -1,62 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../widgets/order/checkout_item_card.dart';
-import '../../data/dummy_data.dart';
+import '../../providers/cart_provider.dart'; // <--- Panggil providernya
 
-class CheckoutPage extends StatefulWidget {
+// Ubah jadi ConsumerWidget, tidak butuh Stateful lagi!
+class CheckoutPage extends ConsumerWidget {
   const CheckoutPage({super.key});
 
   @override
-  State<CheckoutPage> createState() => _CheckoutPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 1. Pantau isi keranjang secara real-time
+    final cartItems = ref.watch(cartProvider);
+    // 2. Ambil fungsi-fungsi untuk mengubah keranjang
+    final cartNotifier = ref.read(cartProvider.notifier);
 
-class _CheckoutPageState extends State<CheckoutPage> {
-  late List<Map<String, dynamic>> _cartItems;
-
-  @override
-  void initState() {
-    super.initState();
-    _cartItems = [
-      {
-        'product': DummyData.galonList[0], // AQUA 19L
-        'quantity': 2,
-      },
-      {
-        'product': DummyData.gasList[1], // Gas Melon 3kg
-        'quantity': 1,
-      },
-    ];
-  }
-
-  // Hitung total harga
-  int get _totalPrice {
-    return _cartItems.fold(0, (sum, item) {
-      return sum + (item['product'].price * item['quantity'] as int);
-    });
-  }
-
-  // Increment quantity
-  void _incrementQuantity(int index) {
-    setState(() {
-      _cartItems[index]['quantity'] = (_cartItems[index]['quantity'] as int) + 1;
-    });
-  }
-
-  // Decrement quantity
-  void _decrementQuantity(int index) {
-    setState(() {
-      int currentQty = _cartItems[index]['quantity'] as int;
-      if (currentQty > 1) {
-        _cartItems[index]['quantity'] = currentQty - 1;
-      } else {
-        // Remove item jika quantity jadi 0
-        _cartItems.removeAt(index);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FE),
       appBar: AppBar(
@@ -83,24 +41,34 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                // List Item dari dummy data
-                ..._cartItems.asMap().entries.map((entry) {
-                  int index = entry.key;
-                  final item = entry.value;
-                  final product = item['product'];
-                  final quantity = item['quantity'] as int;
-                  final itemTotal = product.price * quantity;
-                  
-                  return CheckoutItemCard(
-                    title: product.name,
-                    subtitle: '$quantity unit x Rp ${product.price}',
-                    price: 'Rp $itemTotal',
-                    quantity: quantity,
-                    onIncrement: () => _incrementQuantity(index),
-                    onDecrement: () => _decrementQuantity(index),
-                  );
-                }),
+                
+                // Jika keranjang kosong
+                if (cartItems.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 40),
+                      child: Text('Keranjang masih kosong', style: TextStyle(color: Colors.grey)),
+                    ),
+                  )
+                else
+                  // List Item langsung dari Provider
+                  ...cartItems.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+                    final itemTotal = item.product.price * item.quantity;
+                    
+                    return CheckoutItemCard(
+                      title: item.product.name,
+                      subtitle: '${item.quantity} unit x Rp ${item.product.price}',
+                      price: 'Rp $itemTotal',
+                      quantity: item.quantity,
+                      onIncrement: () => cartNotifier.increment(index), // <--- Pakai fungsi provider
+                      onDecrement: () => cartNotifier.decrement(index), // <--- Pakai fungsi provider
+                    );
+                  }),
+
                 const SizedBox(height: 20),
+                
                 // Total Tagihan Bar
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -116,7 +84,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
                       Text(
-                        'Rp $_totalPrice',
+                        'Rp ${cartNotifier.totalPrice}', // <--- Ambil total dari provider
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -129,6 +97,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ],
             ),
           ),
+          
           // Tombol Konfirmasi di Bawah
           Align(
             alignment: Alignment.bottomCenter,
@@ -139,7 +108,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: cartItems.isEmpty ? null : () {
+                  // Hanya bisa dipencet jika keranjang tidak kosong
                   context.pushNamed('confirm-order');
                 },
                 style: ElevatedButton.styleFrom(

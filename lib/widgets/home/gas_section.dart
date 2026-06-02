@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/cart_provider.dart';
 import '../../models/product_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../shared/section_header.dart';
+import '../../core/constants/app_colors.dart';
 
-class GasSection extends StatelessWidget {
+class ProductSection extends StatelessWidget {
   final List<ProductModel> products;
 
-  const GasSection({super.key, required this.products});
+  const ProductSection({super.key, required this.products});
 
   String _formatRupiah(int value) {
     return 'Rp ${value.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
@@ -19,31 +22,30 @@ class GasSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'Tabung Gas',
+          title: 'Produk yang tersedia',
           subtitle: 'Kebutuhan dapur yang andal',
-          onActionTap:(){}
+          onActionTap: () {},
         ),
         const SizedBox(height: 14),
-        ...products.map((product) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _GasCard(
-                product: product,
-                formatRupiah: _formatRupiah,
-              ),
-            )),
+        ...products.map(
+          (product) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _GasCard(product: product, formatRupiah: _formatRupiah),
+          ),
+        ),
       ],
     );
   }
 }
 
-class _GasCard extends StatelessWidget {
+class _GasCard extends ConsumerWidget {
   final ProductModel product;
   final String Function(int) formatRupiah;
 
   const _GasCard({required this.product, required this.formatRupiah});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -119,23 +121,32 @@ class _GasCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Tambah',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    ref.read(cartProvider.notifier).addToCart(product);
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  splashColor: AppColors.primaryBlue.withOpacity(0.6),
+                  hoverColor: Colors.transparent,
+                  highlightColor: AppColors.primaryBlue.withOpacity(0.6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Tambah',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
+                      ),
                     ),
                   ),
                 ),

@@ -96,7 +96,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         id: response.user!.id,
         email: response.user!.email ?? '',
         username: customerData['username'] as String,
-        saldoAbunemen: customerData['saldo_abunemen'] as int? ?? 0,
+
+        // Menggunakan parsing aman agar tidak error numeric/int di Flutter
+        saldoAbunemen: customerData['saldo_abunemen'] != null
+            ? int.tryParse(customerData['saldo_abunemen'].toString()) ?? 0
+            : 0,
       );
 
       final loggedCustomer = ref.read(authCustomerProvider);
@@ -114,8 +118,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } on AuthException catch (e) {
       // Catch AuthException → show error in Bahasa Indonesia
       if (!mounted) return;
-      ref.read(loginPageErrorProvider.notifier).state =
-          _translateAuthError(e.message);
+      ref.read(loginPageErrorProvider.notifier).state = _translateAuthError(
+        e.message,
+      );
     } on PostgrestException catch (e) {
       if (!mounted) return;
       ref.read(loginPageErrorProvider.notifier).state =

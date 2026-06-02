@@ -7,10 +7,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import '../../core/constants/app_colors.dart';
 import '../../models/profile_model.dart';
+import '../../services/address_service.dart';
 
 class AddressFormPage extends StatefulWidget {
   /// Kalau null → mode Tambah, kalau diisi → mode Edit
   final AddressModel? existingAddress;
+  // Siapkan supir untuk mengendalikan peta
 
   const AddressFormPage({super.key, this.existingAddress});
 
@@ -37,12 +39,36 @@ class _AddressFormPageState extends State<AddressFormPage> {
   @override
   void initState() {
     super.initState();
+
     if (_isEditMode) {
       final addr = widget.existingAddress!;
-      _namaController.text = addr.name;
+
+      if (addr.name.contains(' - ')) {
+        // Pisahkan teks berdasarkan tanda ' - '
+        final parts = addr.name.split(' - ');
+
+        // Cek apakah kata pertamanya cocok dengan opsi label kita (Rumah/Kantor/Apartemen)
+        if (_labelOptions.contains(parts[0])) {
+          _selectedLabel = parts[0];
+        } else {
+          _selectedLabel = 'Rumah';
+        }
+
+        // Masukkan sisa katanya ke dalam kolom input Nama Lokasi
+        // (.sublist dipakai untuk berjaga-jaga kalau nama lokasinya kebetulan mengandung tanda strip juga)
+        _namaController.text = parts.sublist(1).join(' - ');
+      } else {
+        _namaController.text = addr.name;
+        _selectedLabel = 'Rumah';
+      }
       _alamatController.text = addr.detail;
-      _selectedLabel = addr.label;
       _isUtama = addr.isUtama;
+      // Langsung arahkan peta ke koordinat alamat yang sedang diedit
+      _selectedLocation = LatLng(addr.lat, addr.long);
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _useCurrentLocation();
+      });
     }
   }
 
@@ -59,7 +85,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
     await _reverseGeocode(latlng);
   }
 
-  // ── GUNAKAN LOKASI SAAT INI ───────────────────────────────
   Future<void> _useCurrentLocation() async {
     setState(() => _isLoadingLocation = true);
 
@@ -125,27 +150,145 @@ class _AddressFormPageState extends State<AddressFormPage> {
     }
   }
 
-  void _simpanAlamat() {
+  // ── NOMINATIM FORWARD GEOCODE (Teks -> Kordinat) ─────────────
+  Future<void> _geocodeAndMovePeta(String teksAlamat) async {
+    if (teksAlamat.length < 5) return; // Jangan cari kalau baru ngetik dikit
+
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?q=$teksAlamat&format=json&limit=1',
+      );
+
+      final response = await http.get(
+        url,
+        headers: {'User-Agent': 'MasGalonApp/1.0'},
+      );
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        if (data.isNotEmpty) {
+          final lat = double.parse(data[0]['lat']);
+          final lon = double.parse(data[0]['lon']);
+          final newLatLng = LatLng(lat, lon);
+
+          if (mounted) {
+            setState(() => _selectedLocation = newLatLng);
+            _mapController.move(newLatLng, 16); // Terbangkan petanya!
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Geocode error: $e');
+    }
+  }
+
+  Future<void> _simpanAlamat() async {
     if (_namaController.text.isEmpty || _alamatController.text.isEmpty) {
       _showSnackbar('Nama lokasi dan alamat lengkap wajib diisi');
       return;
     }
 
-    final newAddress = AddressModel(
-      label: _selectedLabel,
-      name: _namaController.text,
-      detail: _alamatController.text,
-      isUtama: _isUtama,
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final addressService = AddressService();
+
+      // Kita gabungkan Label (Rumah/Kantor) dengan Nama yang diketik user
+      // Contoh hasil: "Rumah - Kosan Basith"
+      final namaLokasiGabungan = '$_selectedLabel - ${_namaController.text}';
+
+      if (_isEditMode) {
+        await addressService.ubahAlamat(
+          idAlamat: widget.existingAddress!.id,
+          label: namaLokasiGabungan,
+          detail: _alamatController.text,
+          lat: _selectedLocation.latitude,
+          long: _selectedLocation.longitude,
+          isUtama: _isUtama,
+        );
+      } else {
+        await addressService.tambahAlamat(
+          label: namaLokasiGabungan,
+          detail: _alamatController.text,
+          lat: _selectedLocation.latitude,
+          long: _selectedLocation.longitude,
+          isUtama: _isUtama,
+        );
+      }
+
+      if (mounted) Navigator.pop(context); // Tutup loading
+      if (mounted) Navigator.pop(context); // Kembali ke profil
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      _showSnackbar('Gagal menyimpan alamat: $e');
+    }
+  }
+
+  Future<void> _hapusAlamat() async {
+    // 1. Tampilkan Dialog Konfirmasi agar tidak tidak sengaja terhapus
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Hapus Alamat',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text('Apakah kamu yakin ingin menghapus alamat ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Batal',
+              style: TextStyle(color: AppColors.textGrey),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text(
+              'Hapus',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
     );
 
-    Navigator.pop(context, newAddress);
+    if (confirm != true) return;
+
+    // 2. Eksekusi Penghapusan ke Supabase
+    try {
+      // Tampilkan loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Panggil service untuk menghapus berdasarkan ID
+      await AddressService().hapusAlamat(widget.existingAddress!.id);
+
+      if (mounted) Navigator.pop(context); // Tutup loading dialog
+      if (mounted)
+        Navigator.pop(
+          context,
+        ); // Kembali ke halaman Profil (Otomatis memicu onRefresh)
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // Tutup loading dialog
+      _showSnackbar('Gagal menghapus alamat: $e');
+    }
   }
 
   void _showSnackbar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -193,6 +336,22 @@ class _AddressFormPageState extends State<AddressFormPage> {
             ),
           ],
         ),
+        actions: [
+          // Tombol hapus hanya muncul jika sedang dalam Mode Edit (bukan tambah baru)
+          if (_isEditMode)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: IconButton(
+                onPressed: _hapusAlamat,
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                  size: 26,
+                ),
+                tooltip: 'Hapus Alamat',
+              ),
+            ),
+        ],
       ),
       body: Stack(
         children: [
@@ -241,7 +400,9 @@ class _AddressFormPageState extends State<AddressFormPage> {
                         onTap: _isLoadingLocation ? null : _useCurrentLocation,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
@@ -317,6 +478,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
                             ),
                           ),
                           const SizedBox(height: 12),
+
                           Row(
                             children: _labelOptions.map((label) {
                               final isSelected = _selectedLabel == label;
@@ -327,7 +489,9 @@ class _AddressFormPageState extends State<AddressFormPage> {
                                       setState(() => _selectedLabel = label),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 18, vertical: 12),
+                                      horizontal: 18,
+                                      vertical: 12,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? AppColors.darkBlue
@@ -355,26 +519,28 @@ class _AddressFormPageState extends State<AddressFormPage> {
                             }).toList(),
                           ),
                           const SizedBox(height: 22),
+                          // 👇 SELIPKAN KEMBALI KODINGAN INI 👇
                           _buildLabel('NAMA LOKASI'),
                           const SizedBox(height: 10),
                           _buildTextField(
                             controller: _namaController,
-                            hint: 'Contoh: Rumah, Kantor...',
+                            hint: 'Contoh: Kosan, Rumah Ortu',
                           ),
                           const SizedBox(height: 20),
+                          // 👆
                           _buildLabel('ATUR SEBAGAI'),
                           const SizedBox(height: 10),
                           GestureDetector(
-                            onTap: () =>
-                                setState(() => _isUtama = !_isUtama),
+                            onTap: () => setState(() => _isUtama = !_isUtama),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 16),
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.grey[100],
                                 borderRadius: BorderRadius.circular(16),
-                                border:
-                                    Border.all(color: Colors.grey.shade200),
+                                border: Border.all(color: Colors.grey.shade200),
                               ),
                               child: Row(
                                 children: [
@@ -421,8 +587,9 @@ class _AddressFormPageState extends State<AddressFormPage> {
                           _buildTextField(
                             controller: _alamatController,
                             hint:
-                                'Jl. Contoh No. 12, Kecamatan, Kota, Provinsi...',
-                            maxLines: 4,
+                                'Ketik alamat lalu tekan Enter di keyboard untuk mencari di peta...',
+                            maxLines: 2,
+                            onSubmitted: (value) => _geocodeAndMovePeta(value),
                           ),
                         ],
                       ),
@@ -489,17 +656,24 @@ class _AddressFormPageState extends State<AddressFormPage> {
     required TextEditingController controller,
     required String hint,
     int maxLines = 1,
+    Function(String)? onSubmitted,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
+      textInputAction: maxLines == 1
+          ? TextInputAction.next
+          : TextInputAction.search,
+      onFieldSubmitted: onSubmitted,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFFB0B8C8), fontSize: 14),
         filled: true,
         fillColor: Colors.grey[100],
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.grey.shade200),

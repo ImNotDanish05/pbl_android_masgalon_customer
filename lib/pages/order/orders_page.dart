@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/shared/main_head_bar.dart';
 import '../../widgets/shared/saldo_card.dart';
 import '../../data/dummy_data.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../../widgets/order/order_history_card.dart';
 import '../../widgets/shared/section_header.dart';
-import '../../core/constants/app_colors.dart';
+import '../../providers/auth_provider.dart';
+import '../auth/login_page.dart';
 
-class OrdersPage extends StatefulWidget {
+
+class OrdersPage extends ConsumerStatefulWidget {
   const OrdersPage({super.key});
 
   @override
-  State<OrdersPage> createState() => _OrdersPageState();
+  ConsumerState<OrdersPage> createState() => _OrdersPageState();
 }
 
-class _OrdersPageState extends State<OrdersPage> {
+class _OrdersPageState extends ConsumerState<OrdersPage> {
   int _currentNavIndex = 1;
 
   @override
   Widget build(BuildContext context) {
+    final customer = ref.watch(authCustomerProvider);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: const MainAppBar(),
@@ -29,7 +33,7 @@ class _OrdersPageState extends State<OrdersPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SaldoCard(
-              saldo: DummyData.saldoAbunemen,
+              saldo: customer?.saldoAbunemen ?? 0,
               onTap: () {
                 context.push('/topup');
               },

@@ -2,9 +2,7 @@ import '../models/order_detail_model.dart';
 import '../models/order_model.dart';
 import '../models/product_model.dart';
 import '../models/order_history_model.dart';
-import '../models/product_model.dart';
 import '../models/profile_model.dart';
-
 class DummyData {
   // Katalog Galon
   static const List<ProductModel> galonList = [
@@ -115,16 +113,16 @@ class DummyData {
     ),
   ];
 
-  static const List<VoucherModel> voucherList = [
-    VoucherModel(
-      title: 'Diskon galon beli 1 gratis 1',
-      subtitle: 'Promo terbaik untukmu',
-    ),
-    VoucherModel(
-      title: 'Diskon Gas beli 1 gratis 1',
-      subtitle: 'Promo terbaik untukmu',
-    ),
-  ];
+  // static const List<VoucherModel> voucherList = [
+  //   VoucherModel(
+  //     title: 'Diskon galon beli 1 gratis 1',
+  //     subtitle: 'Promo terbaik untukmu',
+  //   ),
+  //   VoucherModel(
+  //     title: 'Diskon Gas beli 1 gratis 1',
+  //     subtitle: 'Promo terbaik untukmu',
+  //   ),
+  // ];
 
   // Profil
   static const ProfileModel profile = ProfileModel(
@@ -207,21 +205,21 @@ class DummyData {
   ];
 
   // Alamat
-  static const List<AddressModel> addressList = [
-    AddressModel(
-      label: 'Rumah',
-      name: 'Rumah (Utama)',
-      detail:
-          'Jl. Menteng Pulo No. 42, Setiabudi, Jakarta Selatan, DKI Jakarta 12970',
-      isUtama: true,
-    ),
-    AddressModel(
-      label: 'Kantor',
-      name: 'Kantor',
-      detail:
-          'Menara Imperium, Lt. 15, Kuningan, Jakarta Selatan, DKI Jakarta 12980',
-    ),
-  ];
+  // static const List<AddressModel> addressList = [
+  //   AddressModel(
+  //     label: 'Rumah',
+  //     name: 'Rumah (Utama)',
+  //     detail:
+  //         'Jl. Menteng Pulo No. 42, Setiabudi, Jakarta Selatan, DKI Jakarta 12970',
+  //     isUtama: true,
+  //   ),
+  //   AddressModel(
+  //     label: 'Kantor',
+  //     name: 'Kantor',
+  //     detail:
+  //         'Menara Imperium, Lt. 15, Kuningan, Jakarta Selatan, DKI Jakarta 12980',
+  //   ),
+  // ];
 
   static const String successTitle = 'Top Up Berhasil';
   static const String successSubtitle =

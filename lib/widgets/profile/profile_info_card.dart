@@ -5,6 +5,7 @@ import '../../models/profile_model.dart';
 
 class ProfileInfoCard extends StatelessWidget {
   final ProfileModel profile;
+  
 
   const ProfileInfoCard({super.key, required this.profile});
 

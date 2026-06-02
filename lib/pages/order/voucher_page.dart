@@ -1,16 +1,50 @@
 import 'package:flutter/material.dart';
-import '../../data/dummy_data.dart'; // Panggil file dummy voucher
 import '../../models/profile_model.dart';
+import '../../services/voucher_service.dart'; 
 
-class VoucherPage extends StatelessWidget {
+class VoucherPage extends StatefulWidget {
   const VoucherPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final vouchers = DummyData.voucherList;
+  State<VoucherPage> createState() => _VoucherPageState();
+}
 
+class _VoucherPageState extends State<VoucherPage> {
+  // 1. Siapkan wadah dan status loading
+  List<VoucherModel> _vouchers = [];
+  bool _isLoading = true;
+
+  // 2. Fungsi ambil data dari Supabase
+  Future<void> _loadVouchers() async {
+    try {
+      final voucherService = VoucherService();
+      final data = await voucherService.ambilDaftarVoucher();
+
+      if (mounted) {
+        setState(() {
+          _vouchers = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error ambil voucher: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 3. Panggil fungsi saat halaman dibuka
+    _loadVouchers();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Warna background abu-abu sangat muda
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -20,54 +54,59 @@ class VoucherPage extends StatelessWidget {
         ),
         title: const Text('Voucher Saya', style: TextStyle(color: Colors.blue)),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Bagian Header Teks
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 20, 
-                  fontWeight: FontWeight.bold, 
-                  color: Color(0xFF1E3A8A) // Biru tua gelap
-                ), 
-                children: [
-                  const TextSpan(text: 'Tersedia '),
-                  // Angka otomatis menyesuaikan panjang data dummy
-                  TextSpan(
-                    text: '${vouchers.length}',
-                    style: const TextStyle(color: Colors.orange),
+      // 4. Logika Tampilan (Loading / Kosong / Ada Isinya)
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _vouchers.isEmpty
+              ? const Center(
+                  child: Text(
+                    'Belum ada voucher yang tersedia untukmu saat ini.',
+                    style: TextStyle(color: Colors.grey),
                   ),
-                  const TextSpan(text: ' Voucher'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Gunakan sebelum kadaluarsa untuk lebih hemat.',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-            const SizedBox(height: 20),
-
-            // Bagian List Voucher
-            Expanded(
-              child: ListView.builder(
-                itemCount: vouchers.length,
-                itemBuilder: (context, index) {
-                  final voucher = vouchers[index];
-                  return _buildVoucherCard(voucher);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 20, 
+                            fontWeight: FontWeight.bold, 
+                            color: Color(0xFF1E3A8A)
+                          ), 
+                          children: [
+                            const TextSpan(text: 'Tersedia '),
+                            TextSpan(
+                              text: '${_vouchers.length}', // <--- Pakai variabel state
+                              style: const TextStyle(color: Colors.orange),
+                            ),
+                            const TextSpan(text: ' Voucher'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Gunakan sebelum kadaluarsa untuk lebih hemat.',
+                        style: TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
+                      const SizedBox(height: 20),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: _vouchers.length,
+                          itemBuilder: (context, index) {
+                            final voucher = _vouchers[index];
+                            return _buildVoucherCard(voucher);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
     );
   }
 
-  // Widget terpisah untuk Kartu Voucher biar kodenya rapi
   Widget _buildVoucherCard(VoucherModel voucher) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -121,7 +160,7 @@ class VoucherPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        voucher.title,
+                        voucher.title, // <--- Memanggil judul dari Supabase
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -130,7 +169,7 @@ class VoucherPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        voucher.subtitle,
+                        voucher.subtitle, // <--- Memanggil deskripsi dari Supabase
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey[600],
@@ -146,7 +185,8 @@ class VoucherPage extends StatelessWidget {
               alignment: Alignment.bottomRight,
               child: ElevatedButton(
                 onPressed: () {
-                  print('Voucher ${voucher.title} dipakai!');
+                  // Logika saat ditekan bisa ditambahkan nanti
+                  debugPrint('Voucher ${voucher.title} dipakai!');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue[800],

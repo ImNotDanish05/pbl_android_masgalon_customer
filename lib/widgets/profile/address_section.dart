@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/profile_model.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../models/profile_model.dart';
 import '../../../pages/profile/address_form_page.dart';
 
 class AddressSection extends StatelessWidget {
   final List<AddressModel> addresses;
+  final VoidCallback onRefresh;
 
-  const AddressSection({super.key, required this.addresses});
+  const AddressSection({
+    super.key,
+    required this.addresses,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +29,13 @@ class AddressSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
+        // MENGOPER onRefresh KE DALAM CARD
         ...addresses.map((address) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _AddressCard(address: address),
+              child: _AddressCard(
+                address: address,
+                onRefresh: onRefresh, // <--- Dioper di sini
+              ),
             )),
 
         const SizedBox(height: 4),
@@ -35,13 +44,15 @@ class AddressSection extends StatelessWidget {
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              // MENGGUNAKAN NAVIGATOR YANG BENAR
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => const AddressFormPage(),
                 ),
               );
+              onRefresh(); // Refresh setelah kembali
             },
             borderRadius: BorderRadius.circular(12),
             hoverColor: Colors.grey.shade100,
@@ -80,8 +91,12 @@ class AddressSection extends StatelessWidget {
 
 class _AddressCard extends StatelessWidget {
   final AddressModel address;
+  final VoidCallback onRefresh; // <--- Menerima operan fungsi di sini
 
-  const _AddressCard({required this.address});
+  const _AddressCard({
+    required this.address,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -119,20 +134,23 @@ class _AddressCard extends StatelessWidget {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      // NAVIGASI YANG BENAR
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
                               AddressFormPage(existingAddress: address),
                         ),
                       );
+                      onRefresh(); // Refresh setelah kembali
                     },
                     borderRadius: BorderRadius.circular(20),
                     hoverColor: Colors.white24,
                     splashColor: Colors.white24,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 4),
                       child: Row(
                         children: [
                           Icon(Icons.edit_outlined,
@@ -215,14 +233,16 @@ class _AddressCard extends StatelessWidget {
           Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                // TAMBAHKAN AWAIT & GANTI NAVIGATOR DI SINI JUGA
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
                         AddressFormPage(existingAddress: address),
                   ),
                 );
+                onRefresh(); // Refresh setelah kembali
               },
               borderRadius: BorderRadius.circular(20),
               hoverColor: AppColors.darkBlue.withOpacity(0.08),

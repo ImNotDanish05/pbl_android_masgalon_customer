@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../providers/cart_provider.dart';
 import '../../data/dummy_data.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/supabase_client.dart';
@@ -14,6 +15,8 @@ import '../../widgets/home/gas_section.dart';
 import '../../widgets/home/floating_cart_button.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../auth/login_page.dart';
+import '../../services/katalog_service.dart';
+import '../../models/product_model.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -24,6 +27,41 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   int _currentNavIndex = 0;
+  List<ProductModel> daftarGalonAsli = [];
+  List<ProductModel> daftarGasAsli = [];
+  bool isLoadingKatalog = true;
+  Future<void> _loadDataKatalog() async {
+    try {
+      final katalogService = KatalogService();
+
+      // 1. Ambil data mentah (JSON) untuk produk Galon dan Gas sekaligus
+      final rawGalon = await katalogService.ambilDaftarProduk();
+      final rawGas = await katalogService.ambilDaftarGas();
+
+      // 2. MASAK DATANYA: Konversi keduanya menjadi List<ProductModel>
+      final parsedGalon = rawGalon
+          .map((json) => ProductModel.fromJson(json))
+          .toList();
+      final parsedGas = rawGas
+          .map((json) => ProductModel.fromJson(json))
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          // 3. Masukkan hasil masakan ke masing-masing variabel aslinya
+          daftarGalonAsli = parsedGalon;
+          daftarGasAsli =
+              parsedGas; // <--- SEKARANG VARIABEL INI SUDAH ADA ISINYA!
+          isLoadingKatalog = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error ambil katalog/gas: $e');
+      if (mounted) {
+        setState(() => isLoadingKatalog = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -31,6 +69,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     // Delay sedikit biar provider sudah terisi
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _printCurrentUser();
+      _loadDataKatalog();
     });
   }
 
@@ -49,6 +88,14 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final customer = ref.watch(authCustomerProvider);
+    final cartItems = ref.watch(cartProvider);
+    // if (isLoadingKatalog) {
+    //   return const Scaffold(
+    //     body: Center(
+    //       child: CircularProgressIndicator(),
+    //     ),
+    //   );
+    // }
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: const MainAppBar(),
@@ -65,23 +112,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                 HomeSearchBar(hintText: 'Cari galon atau gas...'),
                 const SizedBox(height: 16),
                 SaldoCard(
-                  saldo: DummyData.saldoAbunemen,
+                  saldo: customer?.saldoAbunemen ?? 0,
                   onTap: () => context.push('/topup'),
                 ),
-                const SizedBox(height: 14),
-                RewardCard(
-                  points: DummyData.pointRewards,
-                  pointTarget: DummyData.pointTarget,
-                ),
-                const SizedBox(height: 14),
-                PromoBanner(
-                  label: DummyData.promoLabel,
-                  title: DummyData.promoTitle,
-                ),
+
                 const SizedBox(height: 24),
-                CatalogSection(products: DummyData.galonList),
                 const SizedBox(height: 24),
-                GasSection(products: DummyData.gasList),
+                ProductSection(products: daftarGalonAsli),
               ],
             ),
           ),
@@ -90,7 +127,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           Positioned(
             bottom: 90,
             right: 20,
-            child: FloatingCartButton(itemCount: DummyData.cartItemCount),
+            child: FloatingCartButton(itemCount: cartItems.length),
           ),
 
           // Temporary logout button for testing
@@ -108,9 +145,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 if (context.mounted) {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const LoginPage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
                     (route) => false,
                   );
                 }
@@ -124,7 +159,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         onTap: (index) {
           if (index == 0) {
             context.go('/home');
-          }else if (index == 1) {
+          } else if (index == 1) {
             context.go('/orders');
           } else if (index == 2) {
             context.go('/profile');

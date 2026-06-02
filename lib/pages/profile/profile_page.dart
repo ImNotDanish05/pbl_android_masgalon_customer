@@ -12,6 +12,9 @@ import '../../widgets/profile/voucher_section.dart';
 import '../../widgets/profile/address_section.dart';
 import '../../widgets/profile/menu_akun_section.dart';
 import '../auth/login_page.dart';
+import '../../services/address_service.dart';
+import '../../models/profile_model.dart';
+import '../../services/voucher_service.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -22,6 +25,50 @@ class ProfilePage extends ConsumerStatefulWidget {
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   int _currentNavIndex = 2;
+  List<AddressModel> _daftarAlamat = [];
+  bool _isLoadingAlamat = true;
+  List<VoucherModel> _daftarVoucher = [];
+  bool _isLoadingVoucher = true;
+
+  // 2. Buat fungsi pengambil data dari Supabase
+  Future<void> _loadAlamat() async {
+    try {
+      final addressService = AddressService();
+      final data = await addressService.ambilDaftarAlamat();
+
+      if (mounted) {
+        setState(() {
+          _daftarAlamat = data;
+          _isLoadingAlamat = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error ambil alamat: $e');
+      if (mounted) {
+        setState(() => _isLoadingAlamat = false);
+      }
+    }
+  }
+
+  // 👇 2. BUAT FUNGSI AMBIL VOUCHER DARI DATABASE 👇
+  Future<void> _loadVoucher() async {
+    try {
+      final voucherService = VoucherService();
+      final data = await voucherService.ambilDaftarVoucher();
+
+      if (mounted) {
+        setState(() {
+          _daftarVoucher = data;
+          _isLoadingVoucher = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error ambil voucher: $e');
+      if (mounted) {
+        setState(() => _isLoadingVoucher = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -36,6 +83,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       debugPrint('Username : ${customer?.username}');
       debugPrint('Saldo    : Rp ${customer?.saldoAbunemen}');
       debugPrint('========================================');
+      _loadAlamat();
+      _loadVoucher();
     });
   }
 
@@ -44,9 +93,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Keluar'),
         content: const Text('Apakah kamu yakin ingin keluar dari akun ini?'),
         actions: [
@@ -56,9 +103,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Keluar'),
           ),
         ],
@@ -84,15 +129,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => const LoginPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const LoginPage()),
       (route) => false,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final customer = ref.watch(authCustomerProvider);
+    final profileSaatIni = ProfileModel(
+      name: customer?.username ?? 'Customer',
+      email: customer?.email ?? '-',
+      avatarAsset: DummyData.profile.avatarAsset,
+      saldo: DummyData.profile.saldo,
+    );
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -115,7 +165,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             // Profil Saya
             _SectionLabel(label: 'Profil Saya'),
             const SizedBox(height: 10),
-            ProfileInfoCard(profile: DummyData.profile),
+            ProfileInfoCard(profile: profileSaatIni),
 
             const SizedBox(height: 20),
 
@@ -123,20 +173,27 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             _SectionLabel(label: 'Saldo Saya'),
             const SizedBox(height: 10),
             SaldoCard(
-              saldo: DummyData.profile.saldo,
+              saldo: customer?.saldoAbunemen ?? 0,
               onTap: () => context.push('/topup'),
             ),
 
             const SizedBox(height: 20),
 
             // Voucher
-            VoucherSection(vouchers: DummyData.voucherList),
+            VoucherSection(vouchers: _daftarVoucher),
 
             const SizedBox(height: 20),
 
             // Alamat
-            AddressSection(addresses: DummyData.addressList),
-
+            _isLoadingAlamat
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  ) // Muter saat loading
+                : AddressSection(
+                    addresses: _daftarAlamat,
+                    onRefresh:
+                        _loadAlamat, // (Lihat penjelasan Langkah 3 di bawah)
+                  ),
             const SizedBox(height: 20),
 
             // Menu Akun
