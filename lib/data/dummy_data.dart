@@ -193,7 +193,7 @@ class DummyData {
       'Saldo Anda akan otomatis bertambah setelah admin memverifikasi bukti transfer ini. Mohon tunggu sebentar.';
 
   static const String uploadTitle = 'Bukti Pembayaran (Receipt)';
-  static const String uploadHint = 'Pilih foto atau tarik file ke sini';
+  static const String uploadHint = 'Pilih foto';
   static const String uploadSubHint = 'Maksimal ukuran file 5MB (JPG, PNG)';
 
   static const List<String> paymentInstructions = [

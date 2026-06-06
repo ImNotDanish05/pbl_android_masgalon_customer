@@ -1,9 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // Tambahkan ini
 import '../../widgets/topup/topup_stepper.dart';
 import '../../widgets/topup/topup_step1.dart';
 import '../../widgets/topup/topup_step2.dart';
 import '../../widgets/topup/topup_step3.dart';
+import '../../models/topup_model.dart'; // Sesuaikan path jika berbeda
+import '../../services/topup_service.dart'; // Sesuaikan path jika berbeda
 
 class TopUpPage extends StatefulWidget {
   const TopUpPage({Key? key}) : super(key: key);
@@ -14,9 +17,10 @@ class TopUpPage extends StatefulWidget {
 
 class _TopUpPageState extends State<TopUpPage> {
   int _currentStep = 1;
+  bool _isLoading = false; // State untuk loading
 
   // Form State
-  File? _buktiTransfer;
+  XFile? _buktiTransfer;
   String _nominal = '';
   String _keterangan = '';
 
@@ -32,10 +36,70 @@ class _TopUpPageState extends State<TopUpPage> {
     });
   }
 
-  void _submitData() {
-    // TODO: Panggil API/backend untuk upload bukti transfer di sini
-    print('Mengirim data: Nominal $_nominal, Keterangan $_keterangan');
-    _nextStep(); // Lanjut ke step 3 (Berhasil)
+  // Fungsi submit yang sudah di-update menjadi async
+  Future<void> _submitData() async {
+    // 1. Validasi Input Dasar
+    if (_buktiTransfer == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Harap upload bukti transfer terlebih dahulu')),
+      );
+      return;
+    }
+
+    if (_nominal.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nominal tidak boleh kosong')),
+      );
+      return;
+    }
+
+    // 2. Set Loading True
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      
+      if (userId == null) {
+        throw Exception('User belum login');
+      }
+
+      final topupService = TopupService();
+
+      // 3. Upload gambar bukti transfer ke Supabase Storage
+      final imageUrl = await topupService.uploadBuktiTransfer(_buktiTransfer!);
+
+      // 4. Bersihkan nominal dari karakter selain angka
+      String cleanNominal = _nominal.replaceAll(RegExp(r'[^0-9]'), '');
+      int nominalInt = int.parse(cleanNominal);
+
+      // 5. Buat object model
+      final request = TopupRequest(
+        customerId: userId,
+        nominal: nominalInt,
+        buktiTransferUrl: imageUrl,
+      );
+
+      // 6. Simpan ke database
+      await topupService.submitTopupRequest(request);
+
+      // 7. Lanjut ke Step 3 jika sukses
+      _nextStep(); 
+    } catch (e) {
+      // Tampilkan notifikasi error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengirim topup: ${e.toString()}')),
+      );
+    } finally {
+      // 8. Matikan loading
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -49,6 +113,7 @@ class _TopUpPageState extends State<TopUpPage> {
             ? IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.blue),
                 onPressed: () {
+                  if (_isLoading) return; // Cegah tombol back saat loading
                   if (_currentStep == 1) {
                     Navigator.pop(context);
                   } else {
@@ -59,21 +124,33 @@ class _TopUpPageState extends State<TopUpPage> {
             : null,
         title: const Text('Top Up Saldo', style: TextStyle(color: Colors.blue)),
       ),
-      body: Column(
+      body: Stack( // Gunakan stack untuk menimpa layar dengan loading spinner
         children: [
-          // Tampilkan Stepper hanya di step 1 dan 2
-          if (_currentStep < 3)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: TopUpStepper(currentStep: _currentStep),
-            ),
-            
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: _buildCurrentStepWidget(context),
-            ),
+          Column(
+            children: [
+              if (_currentStep < 3)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: TopUpStepper(currentStep: _currentStep),
+                ),
+                
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: _buildCurrentStepWidget(context),
+                ),
+              ),
+            ],
           ),
+          
+          // Overlay Loading
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
         ],
       ),
     );
@@ -93,7 +170,7 @@ class _TopUpPageState extends State<TopUpPage> {
         onNominalChanged: (val) => setState(() => _nominal = val),
         onKeteranganChanged: (val) => setState(() => _keterangan = val),
         onBuktiSelected: (file) => setState(() => _buktiTransfer = file),
-        onSubmit: _submitData,
+        onSubmit: _isLoading ? () {} : _submitData, // Disable tombol saat loading
       );
     } else {
       return const TopUpStep3();

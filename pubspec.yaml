@@ -46,6 +46,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   flutter_dotenv: ^5.2.1
   password_strength: ^0.2.0
+  image_picker: ^1.2.2
 
 dev_dependencies:
   flutter_test:
