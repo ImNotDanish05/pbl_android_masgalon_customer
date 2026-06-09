@@ -12,6 +12,9 @@ class CartItem {
 // 2. Buat mesin pengatur keranjangnya
 class CartNotifier extends StateNotifier<List<CartItem>> {
   CartNotifier() : super([]); // Awalnya keranjang kosong
+  void clearCart() {
+    state = [];
+  }
 
   // Fungsi Tambah Barang
   void addToCart(ProductModel product) {

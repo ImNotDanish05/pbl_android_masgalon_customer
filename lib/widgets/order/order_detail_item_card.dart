@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../models/order_detail_model.dart';
+import 'package:pbl_android_masgalon_customer/providers/cart_provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/shared/rupiah_format.dart';
 
 class OrderDetailItemCard extends StatelessWidget {
-  final OrderDetailItem item;
-  final String Function(int) formatRupiah;
+  final CartItem item;
 
-  const OrderDetailItemCard({
-    super.key,
-    required this.item,
-    required this.formatRupiah,
-  });
+  const OrderDetailItemCard({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
+    final product = item.product;
+    final quantity = item.quantity;
+    final int subTotal = product.price * quantity;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -33,8 +32,8 @@ class OrderDetailItemCard extends StatelessWidget {
               color: AppColors.lightBlue,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: item.product.imageAsset.isNotEmpty
-                ? Image.asset(item.product.imageAsset, fit: BoxFit.contain)
+            child: product.imageAsset.isNotEmpty
+                ? Image.asset(product.imageAsset, fit: BoxFit.contain)
                 : const Icon(Icons.local_drink, color: AppColors.primaryBlue),
           ),
           const SizedBox(width: 12),
@@ -43,7 +42,7 @@ class OrderDetailItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.product.brand,
+                  product.brand,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -52,7 +51,7 @@ class OrderDetailItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${item.quantity} x ${item.product.name}',
+                  '$quantity x ${product.name}',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     color: AppColors.textGrey,
@@ -62,7 +61,7 @@ class OrderDetailItemCard extends StatelessWidget {
             ),
           ),
           Text(
-            formatRupiah(item.subTotal),
+            subTotal.toRupiah,
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w700,

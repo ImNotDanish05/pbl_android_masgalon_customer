@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:go_router/go_router.dart';
 class MenuAkunSection extends StatelessWidget {
   final VoidCallback onKeluar;
+  final VoidCallback onTap;
 
-  const MenuAkunSection({super.key, required this.onKeluar});
+  const MenuAkunSection({super.key, required this.onKeluar, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +29,7 @@ class MenuAkunSection extends StatelessWidget {
           iconColor: const Color(0xFF0D52A1),
           title: 'Riwayat Transaksi',
           subtitle: 'Lihat semua pesanan sebelumnya',
-          onTap: () {},
+          onTap: onTap,
           showArrow: true,
         ),
 

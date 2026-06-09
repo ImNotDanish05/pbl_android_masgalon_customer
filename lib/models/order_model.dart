@@ -1,4 +1,4 @@
-enum OrderStatus { completed, cancelled, pending }
+enum OrderStatus { mencariKurir, menungguKurir, diantar, selesai, tolak }
 
 class OrderModel {
   final String id;
@@ -21,12 +21,16 @@ class OrderModel {
 
   String get statusLabel {
     switch (status) {
-      case OrderStatus.completed:
-        return 'SELESAI';
-      case OrderStatus.cancelled:
-        return 'DIBATALKAN';
-      case OrderStatus.pending:
-        return 'DIPROSES';
+      case OrderStatus.mencariKurir:
+        return 'Mencari Kurir';
+      case OrderStatus.menungguKurir:
+        return 'Menunggu Kurir';
+      case OrderStatus.diantar:
+        return 'Diantar';
+      case OrderStatus.selesai:
+        return 'Selesai';
+      case OrderStatus.tolak:
+        return 'Tolak';
     }
   }
 }

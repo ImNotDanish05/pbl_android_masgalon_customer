@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 class HomeSearchBar extends StatelessWidget {
   final String hintText;
-  const HomeSearchBar({super.key, required this.hintText});
+  final ValueChanged<String>? onChanged;
+  const HomeSearchBar({super.key, required this.hintText, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -13,6 +14,7 @@ class HomeSearchBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
+        onChanged: onChanged,
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: TextStyle(color: Colors.grey, fontSize: 14),

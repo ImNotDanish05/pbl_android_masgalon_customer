@@ -24,6 +24,7 @@ import '../pages/topup/topup_page.dart';
 import '../pages/order/voucher_page.dart';
 import '../pages/chat/chat_page.dart';
 import '../services/supabase_client.dart';
+import '../pages/chat/chat_detail_page.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -130,6 +131,11 @@ class AppRouter {
         name: 'chat',
         builder: (context, state) => const ChatPage(),
       ),
+      // GoRoute(
+      //   path: '/chat/detail',
+      //   name: 'chat-detail',
+      //   builder: (context, state) => const ChatDetailPage(),
+      // ),
       GoRoute(
         path: '/orders',
         name: 'orders',
@@ -158,7 +164,10 @@ class AppRouter {
       GoRoute(
         path: '/orders-success',
         name: 'orders-success',
-        builder: (context, state) => const PaymentSuccessPage(),
+        builder: (context, state) {
+          final data = state.extra as Map<String, dynamic>? ?? {};
+          return PaymentSuccessPage(transactionData: data);
+        }
       ),
       GoRoute(
         path: '/upload-receipt',

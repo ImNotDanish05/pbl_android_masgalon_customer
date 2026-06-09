@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/shared/rupiah_format.dart';
 
 class ConfirmDeliverySection extends StatelessWidget {
   final String selectedDelivery;
   final Map<String, dynamic> deliveryOptions;
   final Function(String) onSelected;
-  final String Function(int) formatRupiah;
 
   const ConfirmDeliverySection({
     super.key,
     required this.selectedDelivery,
     required this.deliveryOptions,
     required this.onSelected,
-    required this.formatRupiah,
   });
 
   @override
@@ -50,6 +49,7 @@ class ConfirmDeliverySection extends StatelessWidget {
             final IconData icon = key == 'Kilet'
                 ? Icons.flash_on_outlined
                 : Icons.schedule_outlined;
+            final int harga = data['price'] ?? 0;
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -57,7 +57,7 @@ class ConfirmDeliverySection extends StatelessWidget {
                 icon: icon,
                 title: data['label'],
                 subtitle: data['subtitle'],
-                price: '+' + formatRupiah(data['price']),
+                price: harga == 0 ? 'Gratis' : '+${harga.toRupiah}',
                 value: key,
               ),
             );
