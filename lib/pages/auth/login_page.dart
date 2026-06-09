@@ -69,11 +69,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       // 3. Check role from users table — must be 'Customer'
       final userData = await supabase
           .from('users')
-          .select('role')
+          .select('role, avatar_url')
           .eq('id', response.user!.id)
           .single();
 
       final role = userData['role'] as String?;
+      final avatarUrl = userData['avatar_url'] as String?;
 
       // 4. If role != 'Customer' → signOut + show error
       if (role != 'Customer') {
@@ -96,6 +97,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         id: response.user!.id,
         email: response.user!.email ?? '',
         username: customerData['username'] as String,
+        avatarUrl: avatarUrl,
 
         // Menggunakan parsing aman agar tidak error numeric/int di Flutter
         saldoAbunemen: customerData['saldo_abunemen'] != null

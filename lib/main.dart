@@ -199,11 +199,12 @@ class _StartupPageState extends ConsumerState<_StartupPage> {
       // Cek role dulu
       final userData = await supabase
           .from('users')
-          .select('role')
+          .select('role, avatar_url')
           .eq('id', session.user.id)
           .single();
 
       final role = userData['role'] as String;
+      final avatarUrl = userData['avatar_url'] as String?;
 
       if (role != 'Customer') {
         await supabase.auth.signOut();
@@ -224,6 +225,7 @@ class _StartupPageState extends ConsumerState<_StartupPage> {
         id: session.user.id,
         email: session.user.email ?? '',
         username: customerData['username'] as String,
+        avatarUrl: avatarUrl,
         saldoAbunemen: customerData['saldo_abunemen'] as int? ?? 0,
       );
 

@@ -15,6 +15,7 @@ import '../auth/login_page.dart';
 import '../../services/address_service.dart';
 import '../../models/profile_model.dart';
 import '../../services/voucher_service.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -141,6 +142,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       name: customer?.username ?? 'Customer',
       email: customer?.email ?? '-',
       avatarAsset: DummyData.profile.avatarAsset,
+      avatarUrl: customer?.avatarUrl,
       saldo: DummyData.profile.saldo,
     );
     return Scaffold(
@@ -163,9 +165,30 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Profil Saya
-            _SectionLabel(label: 'Profil Saya'),
-            const SizedBox(height: 10),
-            ProfileInfoCard(profile: profileSaatIni),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _SectionLabel(label: 'Profil Saya'),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, color: Color(0xFF1A56DB)),
+                    onPressed: () {
+                      // Pindah ke halaman EditProfilePage saat ikon diklik
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EditProfilePage(),
+                        ),
+                      ).then((_) {
+                        // Blok ini akan berjalan saat user kembali dari halaman edit profil.
+                        // Kamu bisa memanggil fungsi refresh data di sini jika diperlukan agar data terbaru langsung muncul.
+                        setState(() {}); 
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ProfileInfoCard(profile: profileSaatIni),
 
             const SizedBox(height: 20),
 

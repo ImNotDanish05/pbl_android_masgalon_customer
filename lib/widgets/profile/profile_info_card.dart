@@ -11,6 +11,12 @@ class ProfileInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ImageProvider avatarImage = (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty)
+        ? NetworkImage(profile.avatarUrl!)
+        : AssetImage(profile.avatarAsset);
+
+    final bool hasRemoteAvatar = profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -56,9 +62,9 @@ class ProfileInfoCard extends StatelessWidget {
           CircleAvatar(
             radius: 36,
             backgroundColor: Colors.white24,
-            backgroundImage: AssetImage(profile.avatarAsset),
+            backgroundImage: avatarImage,
             onBackgroundImageError: (_, __) {},
-            child: const Icon(Icons.person, color: Colors.white, size: 36),
+            child: hasRemoteAvatar ? null : const Icon(Icons.person, color: Colors.white, size: 36),
           ),
         ],
       ),

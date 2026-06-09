@@ -26,6 +26,22 @@ class TopupService {
     }
   }
 
+  // --- Fungsi Mengambil URL QRIS dari Store Config ---
+  Future<String?> fetchQrisImage() async {
+    try {
+      // Mengambil 1 data teratas dari tabel store_config
+      final response = await _supabase
+          .from('store_config')
+          .select('qris_image')
+          .limit(1)
+          .single(); // Pakai single() karena datanya cuma 1 baris
+
+      return response['qris_image'] as String?;
+    } catch (e) {
+      throw Exception('Gagal mengambil data QRIS: $e');
+    }
+  }
+
   // Fungsi 1: Mengirim pengajuan topup baru (INSERT)
   Future<void> submitTopupRequest(TopupRequest request) async {
     try {

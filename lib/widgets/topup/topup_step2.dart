@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // Tambahan wajib untuk buka galeri
+import 'package:flutter/services.dart'; // Wajib di-import untuk input formatter
+import 'package:image_picker/image_picker.dart'; 
 
 class TopUpStep2 extends StatelessWidget {
   final String nominal;
@@ -27,11 +28,10 @@ class TopUpStep2 extends StatelessWidget {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 70, // Kompres ukuran file biar tidak terlalu berat saat upload
+      imageQuality: 70, 
     );
 
     if (pickedFile != null) {
-      // Mengirim file yang dipilih ke halaman utama (topup_page.dart)
       onBuktiSelected(pickedFile);
     }
   }
@@ -78,10 +78,9 @@ class TopUpStep2 extends StatelessWidget {
         const Text('Bukti Pembayaran (Receipt)', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         GestureDetector(
-          onTap: _pickImage, // Memanggil fungsi pick image saat kotak ditekan
+          onTap: _pickImage, 
           child: Container(
             width: double.infinity,
-            // Jika foto sudah dipilih, hapus padding agar foto penuh. Jika belum, beri padding.
             padding: buktiTransfer != null 
                 ? EdgeInsets.zero 
                 : const EdgeInsets.symmetric(vertical: 40),
@@ -90,10 +89,9 @@ class TopUpStep2 extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               color: Colors.white,
             ),
-            // Kondisi untuk menampilkan Preview Foto atau Icon Upload
             child: buktiTransfer != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(11), // Menyesuaikan lengkungan border
+                    borderRadius: BorderRadius.circular(11), 
                     child: FutureBuilder<Uint8List>(
                       future: buktiTransfer!.readAsBytes(),
                       builder: (context, snapshot) {
@@ -102,7 +100,7 @@ class TopUpStep2 extends StatelessWidget {
                             snapshot.data!,
                             height: 200,
                             width: double.infinity,
-                            fit: BoxFit.cover, // Gambar akan menyesuaikan kotak
+                            fit: BoxFit.cover, 
                           );
                         } else if (snapshot.hasError) {
                           return Center(
@@ -123,7 +121,7 @@ class TopUpStep2 extends StatelessWidget {
                       const Text('Pilih foto'),
                       const SizedBox(height: 12),
                       ElevatedButton(
-                        onPressed: _pickImage, // Tombol ini juga memanggil fungsi yang sama
+                        onPressed: _pickImage, 
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
                           backgroundColor: Colors.blue[800],
@@ -136,14 +134,20 @@ class TopUpStep2 extends StatelessWidget {
         ),
         const SizedBox(height: 20),
 
-        // Inputs
+        // --- INPUT NOMINAL YANG SUDAH DIUPDATE ---
         const Text('Jumlah Nominal Yang Telah Ditransfer', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         TextField(
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.number, // Memunculkan keyboard angka saja
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly, // Memblokir spasi, koma, huruf, dll
+            ThousandsSeparatorInputFormatter(),     // Format titik otomatis (class ada di bawah)
+          ],
           onChanged: onNominalChanged,
           decoration: InputDecoration(
-            hintText: 'Masukkan Nominal',
+            prefixText: 'Rp ', // Tulisan otomatis di depan
+            prefixStyle: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
+            hintText: '0', // Hint text dibuat lebih relevan dengan angka
             filled: true,
             fillColor: Colors.grey[200],
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
@@ -180,6 +184,37 @@ class TopUpStep2 extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// --- CLASS TAMBAHAN UNTUK FORMAT TITIK RIBUAN ---
+class ThousandsSeparatorInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    // Jika input kosong, kembalikan kosong
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    // Hanya ambil angka, buang karakter lain (berjaga-jaga)
+    String numericOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Logika menambah titik setiap 3 digit dari belakang
+    String formatted = '';
+    int count = 0;
+    for (int i = numericOnly.length - 1; i >= 0; i--) {
+      if (count != 0 && count % 3 == 0) {
+        formatted = '.$formatted';
+      }
+      formatted = numericOnly[i] + formatted;
+      count++;
+    }
+
+    // Kembalikan teks yang sudah diformat dengan posisi kursor tetap di ujung kanan
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

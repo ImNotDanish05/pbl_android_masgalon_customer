@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/topup_service.dart'; // Pastikan path ini sesuai dengan struktur foldermu
 
 class TopUpStep1 extends StatelessWidget {
   final VoidCallback onNext;
@@ -8,6 +9,9 @@ class TopUpStep1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Inisialisasi service untuk memanggil fungsi fetchQrisImage()
+    final topupService = TopupService();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -20,29 +24,74 @@ class TopUpStep1 extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Dummy QR Code
-              Container(
-                height: 200,
-                width: 200,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.black),
-                ),
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 100,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 10,
-                  ),
-                  itemBuilder: (context, index) {
+              // --- Bagian FutureBuilder Pengganti Dummy QR Code ---
+              FutureBuilder<String?>(
+                future: topupService.fetchQrisImage(),
+                builder: (context, snapshot) {
+                  // Kondisi 1: Sedang Loading
+                  if (snapshot.connectionState == ConnectionState.waiting) {
                     return Container(
-                      color: (index % 3 == 0) ? Colors.black : Colors.white,
+                      height: 200,
+                      width: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Center(child: CircularProgressIndicator()),
                     );
-                  },
-                ),
+                  }
+
+                  // Kondisi 2: Error atau Data Kosong
+                  if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Container(
+                      height: 200,
+                      width: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'QRIS belum tersedia',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Kondisi 3: Berhasil mendapat URL gambar dari Supabase
+                  return Container(
+                    height: 200,
+                    width: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.black12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        snapshot.data!, // Tampilkan gambar
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const Center(child: CircularProgressIndicator());
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(Icons.broken_image, size: 50, color: Colors.grey)
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 30),
 
+              // --- Bagian Info Cara Pembayaran (Tetap sama seperti aslimu) ---
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -82,6 +131,8 @@ class TopUpStep1 extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 30),
+        
+        // --- Bagian Tombol (Tetap sama seperti aslimu) ---
         ElevatedButton.icon(
           onPressed: onNext,
           icon: const Icon(Icons.receipt_long),

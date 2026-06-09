@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../pages/profile/security_page.dart'; 
+
 class MenuAkunSection extends StatelessWidget {
   final VoidCallback onKeluar;
 
@@ -31,7 +33,23 @@ class MenuAkunSection extends StatelessWidget {
           onTap: () {},
           showArrow: true,
         ),
+        const SizedBox(height: 10),
 
+        // 👇 MENU KEAMANAN AKUN (Gabungan Email & Password) 👇
+        _MenuItem(
+          icon: Icons.shield_outlined,
+          iconBgColor: const Color(0xFFE5F7ED), // Warna hijau soft
+          iconColor: const Color(0xFF4CAF50),
+          title: 'Keamanan Akun',
+          subtitle: 'Ubah email dan perbarui kata sandi Anda',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SecurityPage()),
+            );
+          },
+          showArrow: true,
+        ),
         const SizedBox(height: 10),
 
         // Keluar
@@ -49,6 +67,7 @@ class MenuAkunSection extends StatelessWidget {
   }
 }
 
+// Widget _MenuItem tidak ada yang diubah, tetap pakai punyamu
 class _MenuItem extends StatelessWidget {
   final IconData icon;
   final Color iconBgColor;
