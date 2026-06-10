@@ -8,7 +8,6 @@ import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../../widgets/order/order_history_card.dart';
 import '../../widgets/shared/section_header.dart';
 import '../../providers/auth_provider.dart';
-import '../auth/login_page.dart';
 
 
 class OrdersPage extends ConsumerStatefulWidget {

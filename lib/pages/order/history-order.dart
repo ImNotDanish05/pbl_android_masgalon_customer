@@ -87,13 +87,10 @@ class _HistoryOrderPageState extends State<HistoryOrderPage> {
                   return HistoryOrderCard(
                     order: order,
                     onLacakTap: () {
-                      // Arahkan ke detail pesanan saat tombol lacak ditekan
                       context.push('/track-order');
                     },
                   );
                 }).toList(),
-
-                // Footer Empty State Sederhana di paling bawah
                 const SizedBox(height: 40),
                 Center(
                   child: Column(
@@ -128,7 +125,7 @@ class _HistoryOrderPageState extends State<HistoryOrderPage> {
     );
   }
 
-  // Widget Bantuan untuk Tab Kustom
+
   Widget _buildCustomTabBar() {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 10, 20, 10),

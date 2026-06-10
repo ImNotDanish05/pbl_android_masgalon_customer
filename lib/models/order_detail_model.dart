@@ -35,12 +35,16 @@ class OrderDetailModel {
 
   String get statusText {
     switch (status) {
-      case OrderStatus.completed:
-        return 'SELESAI';
-      case OrderStatus.cancelled:
-        return 'DIBATALKAN';
-      case OrderStatus.pending:
-        return 'DIPROSES';
+      case OrderStatus.mencariKurir:
+        return 'Mencari Kurir';
+      case OrderStatus.menungguKurir:
+        return 'Menunggu Kurir';
+      case OrderStatus.diantar:
+        return 'Diantar';
+      case OrderStatus.selesai:
+        return 'Selesai';
+      case OrderStatus.tolak:
+        return 'Tolak';
     }
   }
 }

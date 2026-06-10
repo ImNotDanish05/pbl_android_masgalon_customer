@@ -22,7 +22,7 @@ class ProductSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'Produk yang tersedia',
+          title: 'Daftar Produk',
           subtitle: 'Kebutuhan dapur yang andal',
           onActionTap: () {},
         ),
@@ -69,11 +69,34 @@ class _GasCard extends ConsumerWidget {
               color: const Color(0xFF1A2A3A),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.propane_tank_outlined,
-              color: Colors.white60,
-              size: 32,
-            ),
+            child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                ? Image.network(
+                    product.imageUrl!,
+                    fit: BoxFit
+                        .cover, // Biar gambarnya proporsional memenuhi kotak
+                    // Loading animasi saat gambar sedang di-download dari internet
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    },
+
+                    // jika link eror
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.broken_image_outlined,
+                      color: Colors.grey,
+                    ),
+                  )
+                : const Icon(
+                    Icons.propane_tank_outlined,
+                    color: Colors.grey,
+                    size: 32,
+                  ),
           ),
           const SizedBox(width: 14),
 

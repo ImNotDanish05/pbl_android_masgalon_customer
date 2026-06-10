@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/dummy_track.dart';
-import 'shared/rupiah_format.dart'; // Pastikan extension .toRupiah milikmu di-import
+import 'shared/rupiah_format.dart'; 
+import 'package:go_router/go_router.dart';
+import '../pages/order/track_order_page.dart';
 
 class DriverInfoSheet extends StatelessWidget {
   const DriverInfoSheet({super.key});
@@ -95,25 +97,6 @@ class DriverInfoSheet extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Tombol Chat
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.chat, size: 16, color: Colors.white),
-                label: Text(
-                  'Chat',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.darkBlue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
             ],
           ),
 
@@ -178,7 +161,9 @@ class DriverInfoSheet extends StatelessWidget {
                 ],
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  context.push('/orders/detail');
+                },
                 child: Text(
                   'Rincian Pesanan >',
                   style: GoogleFonts.poppins(

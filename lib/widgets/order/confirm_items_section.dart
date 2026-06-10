@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pbl_android_masgalon_customer/providers/cart_provider.dart';
 import '../../core/constants/app_colors.dart';
-import '../../models/order_detail_model.dart';
-import 'order_detail_item_card.dart'; // atau order_item_row.dart
+import 'order_detail_item_card.dart';
 
 class ConfirmItemsSection extends StatelessWidget {
-  final String title; // 1. TAMBAHKAN VARIABEL INI
-  final List<OrderDetailItem> items;
-  final String Function(int) formatRupiah;
+  final String title;
+  final List<CartItem> items;
 
   const ConfirmItemsSection({
     super.key,
     this.title = 'Detail Item', // default
     required this.items,
-    required this.formatRupiah,
   });
 
   @override
@@ -46,12 +44,7 @@ class ConfirmItemsSection extends StatelessWidget {
           const SizedBox(height: 12),
           Column(
             children: items
-                .map(
-                  (item) => OrderDetailItemCard(
-                    item: item,
-                    formatRupiah: formatRupiah,
-                  ),
-                )
+                .map((item) => OrderDetailItemCard(item: item))
                 .toList(),
           ),
         ],

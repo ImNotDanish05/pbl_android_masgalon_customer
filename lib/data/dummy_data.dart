@@ -59,7 +59,7 @@ class DummyData {
       title: '2 Galon Air Mineral, 1 Gas LPG',
       details: '12 Okt 2023 • 14:20',
       price: 128000,
-      status: OrderStatus.pending,
+      status: OrderStatus.mencariKurir,
       repeatable: false,
     ),
     OrderModel(
@@ -67,7 +67,7 @@ class DummyData {
       title: '3 Gas LPG 3kg [Refill]',
       details: '12 Okt 2023 • 15:30',
       price: 66000,
-      status: OrderStatus.pending,
+      status: OrderStatus.mencariKurir,
       repeatable: false,
     ),
     OrderModel(
@@ -75,7 +75,7 @@ class DummyData {
       title: '3 Galon Aqua 19L',
       details: '12 Okt 2023 • 14:20',
       price: 54000,
-      status: OrderStatus.completed,
+      status: OrderStatus.selesai,
       repeatable: true,
     ),
     OrderModel(
@@ -83,7 +83,7 @@ class DummyData {
       title: '1 Galon Le Minerale',
       details: '08 Okt 2023 • 09:15',
       price: 18000,
-      status: OrderStatus.cancelled,
+      status: OrderStatus.tolak,
       note: 'Dibatalkan oleh sistem',
     ),
     OrderModel(
@@ -91,7 +91,7 @@ class DummyData {
       title: '2 Galon Vit',
       details: '01 Okt 2023 • 18:45',
       price: 30000,
-      status: OrderStatus.completed,
+      status: OrderStatus.selesai,
       repeatable: true,
     ),
   ];
@@ -101,7 +101,7 @@ class DummyData {
       id: 'MG-9821',
       label: 'Pesanan Berjalan',
       date: '12 Okt 2023 • 14:30',
-      status: OrderStatus.pending,
+      status: OrderStatus.mencariKurir,
       totalPrice: 128000,
       progress: 65,
       note: 'Driver menuju lokasi',

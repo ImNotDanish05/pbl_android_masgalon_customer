@@ -1,26 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../models/order_history_model.dart';
-import '../shared/status_badge.dart'; // Pastikan path ini benar!
+import '../shared/status_badge.dart';
+import '../../widgets/shared/rupiah_format.dart';
+import '../../data/chat_dummy_data.dart';
+import '../../pages/chat/chat_detail_page.dart';
 
 class HistoryOrderCard extends StatelessWidget {
   final HistoryOrderModel order;
   final VoidCallback? onLacakTap;
 
   const HistoryOrderCard({super.key, required this.order, this.onLacakTap});
-
-  String _formatRupiah(int value) {
-    final str = value.toString();
-    final buffer = StringBuffer();
-    int count = 0;
-    for (int i = str.length - 1; i >= 0; i--) {
-      if (count > 0 && count % 3 == 0) buffer.write('.');
-      buffer.write(str[i]);
-      count++;
-    }
-    return 'Rp ${buffer.toString().split('').reversed.join()}';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +110,7 @@ class HistoryOrderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _formatRupiah(order.totalPrice),
+                      order.totalPrice.toRupiah,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -184,32 +176,133 @@ class HistoryOrderCard extends StatelessWidget {
             ],
 
             // Tombol Lacak Pesanan
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onLacakTap,
-                icon: const Icon(
-                  Icons.local_shipping,
-                  size: 18,
-                  color: Colors.white,
-                ),
-                label: Text(
-                  'Lacak Pesanan',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.darkBlue,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
+            // 👇 ROW BARU: Detail + Chat + Lacak 👇
+            Row(
+              children: [
+                // 1. Tombol Detail Pesanan (Garis Tiga)
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBlue,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  elevation: 0,
+                  child: IconButton(
+                    onPressed: () {
+                      context.push('/orders/detail');
+                    },
+                    icon: const Icon(
+                      Icons.receipt_long_outlined, // Ikon nota
+                      color: AppColors.primaryBlue,
+                      size: 20,
+                    ),
+                    tooltip: 'Detail Pesanan',
+                  ),
                 ),
-              ),
+
+                // 2. Tombol Chat Kurir
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBlue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      final defaultChat = ChatDummyData.chatList.first;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatDetailPage(chat: defaultChat),
+                        ),
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.chat_outlined,
+                      color: AppColors.primaryBlue,
+                      size: 20,
+                    ),
+                    tooltip: 'Chat Kurir',
+                  ),
+                ),
+
+                // 3. Tombol Lacak Pesanan (Expanded)
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: onLacakTap,
+                    icon: const Icon(
+                      Icons.local_shipping,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      'Lacak',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkBlue,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBlue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      context.push('/orders/detail');
+                    },
+                    icon: const Icon(
+                      Icons.receipt_long_outlined, // Ikon nota
+                      color: AppColors.primaryBlue,
+                      size: 20,
+                    ),
+                    tooltip: 'Detail Pesanan',
+                  ),
+                ),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      context.push('/confirm-order');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          AppColors.primaryBlue, // Warna sama dengan Lacak
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          10,
+                        ), // Radius sama dengan Lacak
+                      ),
+                    ),
+                    child: Text(
+                      'Pesan Lagi',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ],

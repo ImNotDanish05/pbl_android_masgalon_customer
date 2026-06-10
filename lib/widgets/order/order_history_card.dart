@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/order_model.dart';
+import '../../data/chat_dummy_data.dart';
+import '../../pages/chat/chat_detail_page.dart';
 
 class OrderHistoryCard extends StatelessWidget {
   final OrderModel order;
@@ -16,22 +18,30 @@ class OrderHistoryCard extends StatelessWidget {
 
   Color _statusBackground(OrderStatus status) {
     switch (status) {
-      case OrderStatus.completed:
+      case OrderStatus.selesai:
         return const Color(0xFFE6F9EF);
-      case OrderStatus.cancelled:
+      case OrderStatus.tolak:
         return const Color(0xFFFDE8E8);
-      case OrderStatus.pending:
+      case OrderStatus.mencariKurir:
+        return const Color(0xFFFFF4DB);
+      case OrderStatus.menungguKurir:
+        return const Color(0xFFFFF4DB);
+      case OrderStatus.diantar:
         return const Color(0xFFFFF4DB);
     }
   }
 
   Color _statusTextColor(OrderStatus status) {
     switch (status) {
-      case OrderStatus.completed:
+      case OrderStatus.selesai:
         return const Color(0xFF147950);
-      case OrderStatus.cancelled:
+      case OrderStatus.tolak:
         return const Color(0xFFB42318);
-      case OrderStatus.pending:
+      case OrderStatus.mencariKurir:
+        return const Color(0xFF92400E);
+      case OrderStatus.menungguKurir:
+        return const Color(0xFF92400E);
+      case OrderStatus.diantar:
         return const Color(0xFF92400E);
     }
   }
@@ -108,6 +118,7 @@ class OrderHistoryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // 1. Teks Harga (Tampil selalu)
               Text(
                 formatRupiah(order.price),
                 style: GoogleFonts.poppins(
@@ -116,23 +127,89 @@ class OrderHistoryCard extends StatelessWidget {
                   color: AppColors.darkBlue,
                 ),
               ),
-              if (order.repeatable)
-                OutlinedButton(
-                  onPressed: () {
-                    context.push('/confirm-order');
-                  },
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.primaryBlue),
+              if (order.status == OrderStatus.mencariKurir)
+                Row(
+                  children: [
+                    // Tombol Detail
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightBlue,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: IconButton(
+                        onPressed: () => context.push('/orders/detail'),
+                        icon: const Icon(
+                          Icons.receipt_long_outlined,
+                          color: AppColors.primaryBlue,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    // Tombol Chat
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightBlue,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: IconButton(
+                        onPressed: () {
+                          final defaultChat = ChatDummyData.chatList.first;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChatDetailPage(chat: defaultChat),
+                            ),
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.chat_outlined,
+                          color: AppColors.primaryBlue,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    // Tombol Lacak
+                    ElevatedButton(
+                      onPressed: (){
+                        context.push('/track-order');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        'Lacak',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              // Jika statusnya SELESAI / DIBATALKAN (Tampilkan Pesan Lagi)
+              else if (order.status == OrderStatus.selesai || order.status == OrderStatus.tolak)
+                ElevatedButton(
+                  onPressed: () => context.push('/confirm-order'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Pesan Lagi',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
+                      color: Colors.white,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primaryBlue,
                     ),
                   ),
                 ),

@@ -211,16 +211,21 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             _isLoadingAlamat
                 ? const Center(
                     child: CircularProgressIndicator(),
-                  ) // Muter saat loading
+                  ) 
                 : AddressSection(
                     addresses: _daftarAlamat,
                     onRefresh:
-                        _loadAlamat, // (Lihat penjelasan Langkah 3 di bawah)
+                        _loadAlamat, 
                   ),
             const SizedBox(height: 20),
 
             // Menu Akun
-            MenuAkunSection(onKeluar: _handleKeluar),
+            MenuAkunSection(
+              onTap: () {
+                context.push('/orders/history');
+              },
+              onKeluar: _handleKeluar,
+            ),
 
             const SizedBox(height: 16),
           ],

@@ -120,7 +120,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
     }
   }
 
-  // ── NOMINATIM REVERSE GEOCODE ─────────────────────────────
+
   Future<void> _reverseGeocode(LatLng latlng) async {
     try {
       final url = Uri.parse(
@@ -173,7 +173,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
           if (mounted) {
             setState(() => _selectedLocation = newLatLng);
-            _mapController.move(newLatLng, 16); // Terbangkan petanya!
+            _mapController.move(newLatLng, 16);
           }
         }
       }
@@ -196,9 +196,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
       );
 
       final addressService = AddressService();
-
-      // Kita gabungkan Label (Rumah/Kantor) dengan Nama yang diketik user
-      // Contoh hasil: "Rumah - Kosan Basith"
       final namaLokasiGabungan = '$_selectedLabel - ${_namaController.text}';
 
       if (_isEditMode) {
@@ -519,7 +516,6 @@ class _AddressFormPageState extends State<AddressFormPage> {
                             }).toList(),
                           ),
                           const SizedBox(height: 22),
-                          // 👇 SELIPKAN KEMBALI KODINGAN INI 👇
                           _buildLabel('NAMA LOKASI'),
                           const SizedBox(height: 10),
                           _buildTextField(

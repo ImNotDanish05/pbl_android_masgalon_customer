@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/shared/rupiah_format.dart';
 
 class ConfirmSummarySection extends StatelessWidget {
   final int subtotal;
   final int deliveryFee;
   final int total;
-  final String Function(int) formatRupiah;
 
   const ConfirmSummarySection({
     super.key,
     required this.subtotal,
     required this.deliveryFee,
     required this.total,
-    required this.formatRupiah,
+
   });
 
   @override
@@ -36,13 +36,13 @@ class ConfirmSummarySection extends StatelessWidget {
         children: [
           _buildPaymentRow(
             'Subtotal Item',
-            formatRupiah(subtotal),
+            subtotal.toRupiah,
             isTotal: false,
           ),
           const SizedBox(height: 10),
           _buildPaymentRow(
             'Biaya Pengiriman',
-            formatRupiah(deliveryFee),
+            deliveryFee.toRupiah,
             isTotal: false,
           ),
           const SizedBox(height: 12),
@@ -50,7 +50,7 @@ class ConfirmSummarySection extends StatelessWidget {
           const SizedBox(height: 12),
           _buildPaymentRow(
             'Total Pembayaran',
-            formatRupiah(total),
+            total.toRupiah,
             isTotal: true,
           ),
         ],
