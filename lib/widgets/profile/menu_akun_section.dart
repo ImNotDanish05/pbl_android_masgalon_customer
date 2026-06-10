@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
+import '../../pages/profile/security_page.dart';
 
 class MenuAkunSection extends StatelessWidget {
   final VoidCallback onKeluar;
