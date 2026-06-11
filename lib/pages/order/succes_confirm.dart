@@ -7,14 +7,13 @@ import '../../widgets/shared/general_app_bar.dart';
 import '../../widgets/shared/custombutton.dart';
 
 class PaymentSuccessPage extends StatelessWidget {
-  // 👇 1. Tambahkan variabel untuk menangkap data yang dilempar
   final Map<String, dynamic> transactionData;
 
   const PaymentSuccessPage({super.key, required this.transactionData});
 
   @override
   Widget build(BuildContext context) {
-    // 👇 2. Ambil data dari transactionData (dengan nilai default jika kosong)
+    // Ambil data dari transactionData
     final int totalBayar = transactionData['totalBayar'] ?? 0;
     final String paymentMethod = transactionData['metodePembayaran'] ?? '-';
     final String deliveryType = transactionData['tipePengiriman'] ?? '-';

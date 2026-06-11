@@ -157,6 +157,7 @@ class _ConfirmOrderPageState extends ConsumerState<ConfirmOrderPage> {
   Widget build(BuildContext context) {
     final cartItems = ref.watch(cartProvider);
     final cartNotifier = ref.read(cartProvider.notifier);
+    final customer = ref.watch(authCustomerProvider);
 
     // 1. Hitung biaya kurir yang dipilih
     int deliveryFee = 0;
@@ -308,10 +309,12 @@ class _ConfirmOrderPageState extends ConsumerState<ConfirmOrderPage> {
                   // --- SECTION PEMBAYARAN ---
                   ConfirmPaymentSection(
                     selectedPayment: _selectedPayment,
-                    paymentOptions: const {
+                    paymentOptions:  {
                       'Abunemen': {
                         'title': 'Saldo Abunemen',
-                        'subtitle': 'Bayar dengan saldo yang Anda miliki',
+                        'subtitle': customer != null
+                            ? 'Saldo: Rp ${customer.saldoAbunemen}'
+                            : 'Saldo tidak tersedia',
                       },
                       'COD': {
                         'title': 'Cash on Delivery',
