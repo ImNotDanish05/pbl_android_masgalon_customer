@@ -3,12 +3,12 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/shared/main_head_bar.dart';
 import '../../widgets/shared/saldo_card.dart';
-import '../../data/dummy_data.dart';
+import '../../services/orders_service.dart';
+import '../../models/order_model.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../../widgets/order/order_history_card.dart';
 import '../../widgets/shared/section_header.dart';
 import '../../providers/auth_provider.dart';
-
 
 class OrdersPage extends ConsumerStatefulWidget {
   const OrdersPage({super.key});
@@ -19,6 +19,7 @@ class OrdersPage extends ConsumerStatefulWidget {
 
 class _OrdersPageState extends ConsumerState<OrdersPage> {
   int _currentNavIndex = 1;
+  final OrderService _ordersService = OrderService();
 
   @override
   Widget build(BuildContext context) {
@@ -47,15 +48,49 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
               },
             ),
             const SizedBox(height: 14),
-            Column(
-              children: DummyData.orderHistory
-                  .map(
-                    (order) => OrderHistoryCard(
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: _ordersService.getRiwayatPesanan(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Terjadi kesalahan: ${snapshot.error}'),
+                  );
+                }
+
+                final pesananList = snapshot.data ?? [];
+
+                if (pesananList.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Text(
+                        'Belum ada riwayat pesanan.',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  );
+                }
+
+                return Column(
+                  children: pesananList.map((pesananData) {
+                    final order = OrderModel.fromMap(pesananData);
+
+                    return OrderHistoryCard(
                       order: order,
                       formatRupiah: formatPrice,
-                    ),
-                  )
-                  .toList(),
+                    );
+                  }).toList(),
+                );
+              },
             ),
           ],
         ),

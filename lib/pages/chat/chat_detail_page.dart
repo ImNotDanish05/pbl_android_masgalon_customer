@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../data/chat_dummy_data.dart';
 import '../../models/chat_model.dart';
+import '../../services/chat_service.dart'; 
 import '../../widgets/chat/message_bubble.dart';
 import '../../widgets/chat/chat_input_bar.dart';
 
@@ -15,18 +15,8 @@ class ChatDetailPage extends StatefulWidget {
 }
 
 class _ChatDetailPageState extends State<ChatDetailPage> {
-  late List<MessageModel> _messages;
   final _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _messages = List.from(
-      ChatDummyData.messages[widget.chat.id] ?? [],
-    );
-    // Scroll ke bawah setelah build
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-  }
+  final _chatService = ChatService(); // 👈 Inisialisasi Service
 
   @override
   void dispose() {
@@ -44,21 +34,23 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     }
   }
 
-  void _handleSend(String text) {
-    final newMessage = MessageModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      chatId: widget.chat.id,
-      text: text,
-      isFromMe: true,
-      time: _formatTime(DateTime.now()),
-      type: MessageType.text,
-      status: MessageStatus.sent,
-    );
+  // Handle send sekarang mengirim data ke Supabase
+  Future<void> _handleSend(String text) async {
+    if (text.trim().isEmpty) return;
 
-    setState(() => _messages.add(newMessage));
-
-    // Scroll ke bawah setelah pesan baru
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    try {
+      // Mengirim pesan ke database. Asumsi widget.chat.id adalah order_id
+      await _chatService.kirimPesan(
+        orderId: widget.chat.id, 
+        teksPesan: text,
+      );
+      // Tidak perlu setState karena StreamBuilder akan otomatis mendeteksi pesan baru
+      _scrollToBottom();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengirim pesan: $e')),
+      );
+    }
   }
 
   String _formatTime(DateTime dt) {
@@ -86,11 +78,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: Colors.grey[200],
-                  backgroundImage:
-                      AssetImage(widget.chat.kurirAvatar),
+                  backgroundImage: AssetImage(widget.chat.kurirAvatar),
                   onBackgroundImageError: (_, __) {},
-                  child:
-                      const Icon(Icons.person, color: Colors.white),
+                  child: const Icon(Icons.person, color: Colors.white),
                 ),
                 if (widget.chat.isOnline)
                   Positioned(
@@ -102,8 +92,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       decoration: BoxDecoration(
                         color: Colors.green,
                         shape: BoxShape.circle,
-                        border:
-                            Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
                     ),
                   ),
@@ -125,9 +114,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   widget.chat.isOnline ? 'Online' : 'Offline',
                   style: TextStyle(
                     fontSize: 11,
-                    color: widget.chat.isOnline
-                        ? Colors.green
-                        : Colors.grey[400],
+                    color: widget.chat.isOnline ? Colors.green : Colors.grey[400],
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -144,56 +131,68 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       ),
       body: Column(
         children: [
-          // Messages list
+          // 👇 Ganti Expanded biasa dengan StreamBuilder
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 12),
-              itemCount: _messages.length,
-              itemBuilder: (_, index) {
-                final message = _messages[index];
-                final prevMessage =
-                    index > 0 ? _messages[index - 1] : null;
+            child: StreamBuilder<List<MessageModel>>(
+              // Dengarkan perubahan data berdasarkan order_id
+              stream: _chatService.getChatStream(widget.chat.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                // Tampilkan timestamp jika beda waktu dari pesan sebelumnya
-                final showTime = prevMessage == null ||
-                    prevMessage.time != message.time;
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-                return Column(
-                  children: [
-                    if (showTime && !message.isFromMe)
-                      Padding(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 8),
-                        child: Text(
-                          message.time,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[400],
+                final messages = snapshot.data ?? [];
+
+                // Auto-scroll saat ada pesan baru masuk
+                WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+
+                if (messages.isEmpty) {
+                  return const Center(
+                    child: Text('Belum ada pesan. Sapa kurirmu!'),
+                  );
+                }
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  itemCount: messages.length,
+                  itemBuilder: (_, index) {
+                    final message = messages[index];
+                    final prevMessage = index > 0 ? messages[index - 1] : null;
+                    final showTime = prevMessage == null || 
+                        _formatTime(prevMessage.time) != _formatTime(message.time);
+
+                    return Column(
+                      children: [
+                        if (showTime && !message.isFromMe)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              _formatTime(message.time), // 👈 Format waktu
+                              style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                            ),
                           ),
-                        ),
-                      ),
-                    MessageBubble(message: message),
-                    if (showTime && message.isFromMe)
-                      Padding(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 8),
-                        child: Text(
-                          message.time,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[400],
+                        MessageBubble(message: message), 
+                        if (showTime && message.isFromMe)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              _formatTime(message.time), // 👈 Format waktu
+                              style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                            ),
                           ),
-                        ),
-                      ),
-                  ],
+                      ],
+                    );
+                  },
                 );
               },
             ),
           ),
 
-          // Input bar
           ChatInputBar(onSend: _handleSend),
         ],
       ),

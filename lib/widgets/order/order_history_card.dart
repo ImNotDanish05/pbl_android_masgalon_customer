@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/order_model.dart';
-import '../../data/chat_dummy_data.dart';
+import '../../models/chat_model.dart';
 import '../../pages/chat/chat_detail_page.dart';
 
 class OrderHistoryCard extends StatelessWidget {
@@ -127,7 +127,7 @@ class OrderHistoryCard extends StatelessWidget {
                   color: AppColors.darkBlue,
                 ),
               ),
-              if (order.status == OrderStatus.mencariKurir)
+              if (order.status == OrderStatus.menungguKurir || order.status == OrderStatus.diantar)
                 Row(
                   children: [
                     // Tombol Detail
@@ -155,11 +155,19 @@ class OrderHistoryCard extends StatelessWidget {
                       ),
                       child: IconButton(
                         onPressed: () {
-                          final defaultChat = ChatDummyData.chatList.first;
+                          final chatRoom = ChatModel(
+                            id: order
+                                .id, // Menggunakan ID Pesanan sebagai ID Ruang Chat
+                            kurirName: order.kurirName ?? 'Kurir Mas Galon',
+                            kurirAvatar: order.kurirAvatar ?? '',
+                            lastMessage: '',
+                            time: '',
+                            isOnline: true,
+                          );
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ChatDetailPage(chat: defaultChat),
+                              builder: (_) => ChatDetailPage(chat: chatRoom),
                             ),
                           );
                         },
@@ -172,7 +180,7 @@ class OrderHistoryCard extends StatelessWidget {
                     ),
                     // Tombol Lacak
                     ElevatedButton(
-                      onPressed: (){
+                      onPressed: () {
                         context.push('/track-order');
                       },
                       style: ElevatedButton.styleFrom(
@@ -194,7 +202,8 @@ class OrderHistoryCard extends StatelessWidget {
                   ],
                 )
               // Jika statusnya SELESAI / DIBATALKAN (Tampilkan Pesan Lagi)
-              else if (order.status == OrderStatus.selesai || order.status == OrderStatus.tolak)
+              else if (order.status == OrderStatus.selesai ||
+                  order.status == OrderStatus.tolak)
                 ElevatedButton(
                   onPressed: () => context.push('/confirm-order'),
                   style: ElevatedButton.styleFrom(

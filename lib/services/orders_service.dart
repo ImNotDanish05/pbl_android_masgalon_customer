@@ -90,4 +90,40 @@ class OrderService {
       throw Exception('Gagal mengambil opsi pengiriman: $e');
     }
   }
+
+  // Tambahkan ini di dalam class OrderService
+  Future<List<Map<String, dynamic>>> getRiwayatPesanan() async {
+    final myUserId = _supabase.auth.currentUser!.id;
+
+    try {
+      // Tarik data order, gabung dengan order_items, gabung lagi dengan products
+      final response = await _supabase
+          .from('orders')
+          .select('''
+            id,
+            created_at,
+            status,
+            total_harga,
+            metode_pembayaran,
+            couriers (
+              nama_asli,
+              users (
+                username,
+                avatar_url
+              )
+            ),
+            order_items (
+              quantity,
+              products (nama, image_url)
+            )
+          ''')
+          .eq('customer_id', myUserId)
+          .order('created_at', ascending: false); // Urutkan dari yang terbaru
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('Error getRiwayatPesanan: $e');
+      return [];
+    }
+  }
 }

@@ -33,11 +33,15 @@ class ChatListItem extends StatelessWidget {
             Stack(
               children: [
                 CircleAvatar(
-                  radius: 26,
+                  radius: 24,
                   backgroundColor: Colors.grey[200],
-                  backgroundImage: AssetImage(chat.kurirAvatar),
-                  onBackgroundImageError: (_, __) {},
-                  child: const Icon(Icons.person, color: Colors.white),
+                  // 👇 UBAH AssetImage MENJADI NetworkImage
+                  backgroundImage: chat.kurirAvatar.isNotEmpty
+                      ? NetworkImage(chat.kurirAvatar)
+                      : null,
+                  child: chat.kurirAvatar.isEmpty
+                      ? const Icon(Icons.person, color: Colors.grey)
+                      : null,
                 ),
                 if (chat.isOnline)
                   Positioned(

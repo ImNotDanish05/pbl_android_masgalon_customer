@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/chat_model.dart';
+import '../shared/date_format.dart';
 
 class MessageBubble extends StatelessWidget {
   final MessageModel message;
 
   const MessageBubble({super.key, required this.message});
 
+
   @override
   Widget build(BuildContext context) {
     switch (message.type) {
       case MessageType.statusPengiriman:
-        return _StatusPengirimanBubble(message: message);
+        return _StatusPengirimanBubble(message: message, timeText: (message.time.timeZoneName));
       case MessageType.image:
-        return _ImageBubble(message: message);
+        return _ImageBubble(message: message, timeText: message.time.formattedTime);
       case MessageType.text:
-        return _TextBubble(message: message);
+        return _TextBubble(message: message, timeText: message.time.formattedTime);
     }
   }
 }
@@ -23,13 +25,14 @@ class MessageBubble extends StatelessWidget {
 // ── Text bubble ───────────────────────────────────────────────
 class _TextBubble extends StatelessWidget {
   final MessageModel message;
-  const _TextBubble({required this.message});
+  final String timeText;
+  
+  const _TextBubble({required this.message, required this.timeText});
 
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment:
-          message.isFromMe ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: message.isFromMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.72,
@@ -70,7 +73,7 @@ class _TextBubble extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  message.time,
+                  timeText, // 👈 Pakai timeText yang sudah di-format
                   style: TextStyle(
                     fontSize: 10,
                     color: message.isFromMe
@@ -78,12 +81,12 @@ class _TextBubble extends StatelessWidget {
                         : Colors.grey[400],
                   ),
                 ),
+                // Karena di database temanmu tidak ada fitur "read receipt" (centang biru), 
+                // kita asumsikan semua pesan terkirim.
                 if (message.isFromMe) ...[
                   const SizedBox(width: 4),
                   Icon(
-                    message.status == MessageStatus.read
-                        ? Icons.done_all
-                        : Icons.done,
+                    Icons.done, // Centang satu (terkirim)
                     size: 13,
                     color: Colors.white.withOpacity(0.8),
                   ),
@@ -100,7 +103,9 @@ class _TextBubble extends StatelessWidget {
 // ── Status Pengiriman bubble ──────────────────────────────────
 class _StatusPengirimanBubble extends StatelessWidget {
   final MessageModel message;
-  const _StatusPengirimanBubble({required this.message});
+  final String timeText;
+  
+  const _StatusPengirimanBubble({required this.message, required this.timeText});
 
   @override
   Widget build(BuildContext context) {
@@ -184,31 +189,33 @@ class _StatusPengirimanBubble extends StatelessWidget {
 // ── Image bubble ──────────────────────────────────────────────
 class _ImageBubble extends StatelessWidget {
   final MessageModel message;
-  const _ImageBubble({required this.message});
+  final String timeText;
+  
+  const _ImageBubble({required this.message, required this.timeText});
 
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: message.isFromMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.72,
         ),
         margin: const EdgeInsets.symmetric(vertical: 4),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: message.isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             // Image
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: message.imageAsset != null
-                  ? Image.asset(
-                      message.imageAsset!,
+              child: message.imageUrl != null // 👈 Ubah dari imageAsset jadi imageUrl
+                  ? Image.network( // 👈 Pakai Image.network karena gambar dari Supabase Storage adalah URL
+                      message.imageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
                         height: 160,
                         color: Colors.grey[200],
-                        child: const Icon(Icons.image,
+                        child: const Icon(Icons.broken_image,
                             color: Colors.grey, size: 48),
                       ),
                     )
@@ -237,14 +244,16 @@ class _ImageBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (message.text.isNotEmpty) ...[
+                    Text(
+                      message.text,
+                      style: const TextStyle(
+                          fontSize: 13, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 4),
+                  ],
                   Text(
-                    message.text,
-                    style: const TextStyle(
-                        fontSize: 13, color: Colors.black87),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    message.time,
+                    timeText, // 👈 Pakai timeText
                     style: TextStyle(fontSize: 10, color: Colors.grey[400]),
                   ),
                 ],

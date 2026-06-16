@@ -208,13 +208,13 @@ class HistoryOrderCard extends StatelessWidget {
                   ),
                   child: IconButton(
                     onPressed: () {
-                      final defaultChat = ChatDummyData.chatList.first;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChatDetailPage(chat: defaultChat),
-                        ),
-                      );
+                      // final defaultChat = ChatDummyData.chatList.first;
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (_) => ChatDetailPage(chat: defaultChat),
+                      //   ),
+                      // );
                     },
                     icon: const Icon(
                       Icons.chat_outlined,

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/chat_dummy_data.dart';
+import '../../services/chat_service.dart';
 import '../../models/chat_model.dart';
 import '../../widgets/chat/chat_filter_tabs.dart';
 import '../../widgets/chat/chat_list_item.dart';
@@ -21,6 +22,7 @@ class _ChatPageState extends State<ChatPage> {
   String _selectedFilter = 'Semua';
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  final _chatService = ChatService();
 
   @override
   void initState() {
@@ -36,19 +38,17 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  List<ChatModel> get _filteredChats {
-    List<ChatModel> chats = ChatDummyData.chatList;
+  List<ChatModel> _getFilteredChats(List<ChatModel> allChats) {
+    List<ChatModel> filtered = allChats;
 
-    // Filter by tab
     if (_selectedFilter == 'Belum Dibaca') {
-      chats = chats.where((c) => c.unreadCount > 0).toList();
+      filtered = filtered.where((c) => c.unreadCount > 0).toList();
     } else if (_selectedFilter == 'Kurir Aktif') {
-      chats = chats.where((c) => c.isOnline).toList();
+      filtered = filtered.where((c) => c.isOnline).toList();
     }
 
-    // Filter by search
     if (_searchQuery.isNotEmpty) {
-      chats = chats
+      filtered = filtered
           .where(
             (c) =>
                 c.kurirName.toLowerCase().contains(_searchQuery) ||
@@ -56,8 +56,7 @@ class _ChatPageState extends State<ChatPage> {
           )
           .toList();
     }
-
-    return chats;
+    return filtered;
   }
 
   @override
@@ -120,27 +119,47 @@ class _ChatPageState extends State<ChatPage> {
 
           // Chat list
           Expanded(
-            child: _filteredChats.isEmpty
-                ? _buildEmptyState()
-                : ListView.separated(
-                    itemCount: _filteredChats.length,
-                    separatorBuilder: (context, index) =>
-                        Divider(height: 1, color: Colors.grey[100], indent: 76),
-                    itemBuilder: (_, index) {
-                      final chat = _filteredChats[index];
-                      return ChatListItem(
-                        chat: chat,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ChatDetailPage(chat: chat),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+            child: FutureBuilder<List<ChatModel>>(
+              future: _chatService.getDaftarChat(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Gagal memuat chat'));
+                }
+
+                final chats = snapshot.data ?? [];
+                final displayChats = _getFilteredChats(chats);
+
+                if (displayChats.isEmpty) {
+                  return _buildEmptyState();
+                }
+
+                return ListView.separated(
+                  itemCount: displayChats.length,
+                  separatorBuilder: (context, index) =>
+                      Divider(height: 1, color: Colors.grey[100], indent: 76),
+                  itemBuilder: (_, index) {
+                    final chat = displayChats[index];
+                    return ChatListItem(
+                      chat: chat,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatDetailPage(chat: chat),
+                          ),
+                        ).then(
+                          (_) => setState(() {}),
+                        ); // Refresh halaman saat kembali dari chat
+                      },
+                    );
+                  },
+                );
+              },
+            ),
           ),
 
           // Arsip section
