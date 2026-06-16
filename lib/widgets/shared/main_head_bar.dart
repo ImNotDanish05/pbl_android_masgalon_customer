@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../pages/notification/notification_page.dart';
 
@@ -16,8 +17,12 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       title: Row(
         children: [
-          const Icon(Icons.water_drop, color: AppColors.darkBlue, size: 22),
-          const SizedBox(width: 6),
+          SvgPicture.asset(
+            'assets/Logo_MasGalon.svg',
+            width: 24,
+            height: 24,
+          ),
+          const SizedBox(width: 8),
           Text(
             'Mas Galon',
             style: GoogleFonts.poppins(
