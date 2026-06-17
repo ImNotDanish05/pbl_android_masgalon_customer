@@ -9,7 +9,7 @@ import '../pages/auth/ganti_password.dart';
 import '../pages/auth/success_screen.dart';
 import '../pages/home/home_page.dart';
 import '../pages/order/detail_orders.dart';
-import '../pages/order/history-order.dart';
+import '../pages/order/history_order.dart';
 import '../pages/order/orders_page.dart';
 import '../pages/order/checkout_page.dart';
 import '../pages/order/confirm_orders.dart';

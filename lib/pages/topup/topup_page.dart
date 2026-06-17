@@ -7,6 +7,7 @@ import '../../widgets/topup/topup_step2.dart';
 import '../../widgets/topup/topup_step3.dart';
 import '../../models/topup_model.dart'; // Sesuaikan path jika berbeda
 import '../../services/topup_service.dart'; // Sesuaikan path jika berbeda
+import '../../widgets/shared/custom_app_bar.dart';
 
 class TopUpPage extends StatefulWidget {
   const TopUpPage({Key? key}) : super(key: key);
@@ -41,7 +42,9 @@ class _TopUpPageState extends State<TopUpPage> {
     // 1. Validasi Input Dasar
     if (_buktiTransfer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Harap upload bukti transfer terlebih dahulu')),
+        const SnackBar(
+          content: Text('Harap upload bukti transfer terlebih dahulu'),
+        ),
       );
       return;
     }
@@ -61,7 +64,7 @@ class _TopUpPageState extends State<TopUpPage> {
     try {
       final supabase = Supabase.instance.client;
       final userId = supabase.auth.currentUser?.id;
-      
+
       if (userId == null) {
         throw Exception('User belum login');
       }
@@ -86,7 +89,7 @@ class _TopUpPageState extends State<TopUpPage> {
       await topupService.submitTopupRequest(request);
 
       // 7. Lanjut ke Step 3 jika sukses
-      _nextStep(); 
+      _nextStep();
     } catch (e) {
       // Tampilkan notifikasi error
       ScaffoldMessenger.of(context).showSnackBar(
@@ -106,25 +109,21 @@ class _TopUpPageState extends State<TopUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: _currentStep < 3 
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.blue),
-                onPressed: () {
-                  if (_isLoading) return; // Cegah tombol back saat loading
-                  if (_currentStep == 1) {
-                    Navigator.pop(context);
-                  } else {
-                    _prevStep();
-                  }
-                },
-              )
-            : null,
-        title: const Text('Top Up Saldo', style: TextStyle(color: Colors.blue)),
+      appBar: CustomAppBar(
+        title: 'Top Up Saldo',
+        showBackButton: _currentStep < 3,
+        showNotifications: false,
+        onBackPressed: () {
+          if (_isLoading) return;
+          if (_currentStep == 1) {
+            Navigator.pop(context);
+          } else {
+            _prevStep();
+          }
+        },
       ),
-      body: Stack( // Gunakan stack untuk menimpa layar dengan loading spinner
+      body: Stack(
+        // Gunakan stack untuk menimpa layar dengan loading spinner
         children: [
           Column(
             children: [
@@ -133,7 +132,7 @@ class _TopUpPageState extends State<TopUpPage> {
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: TopUpStepper(currentStep: _currentStep),
                 ),
-                
+
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
@@ -142,14 +141,12 @@ class _TopUpPageState extends State<TopUpPage> {
               ),
             ],
           ),
-          
+
           // Overlay Loading
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.3),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),
@@ -170,7 +167,9 @@ class _TopUpPageState extends State<TopUpPage> {
         onNominalChanged: (val) => setState(() => _nominal = val),
         onKeteranganChanged: (val) => setState(() => _keterangan = val),
         onBuktiSelected: (file) => setState(() => _buktiTransfer = file),
-        onSubmit: _isLoading ? () {} : _submitData, // Disable tombol saat loading
+        onSubmit: _isLoading
+            ? () {}
+            : _submitData, // Disable tombol saat loading
       );
     } else {
       return const TopUpStep3();

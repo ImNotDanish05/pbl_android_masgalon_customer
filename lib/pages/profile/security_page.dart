@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/shared/custom_app_bar.dart';
 import 'edit_email_page.dart';
 
 class SecurityPage extends ConsumerStatefulWidget {
@@ -56,23 +57,12 @@ class _SecurityPageState extends ConsumerState<SecurityPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.black87, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Keamanan Akun',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+      appBar: CustomAppBar(
+        title: 'Keamanan Akun',
+        showBackButton: true,
+        showNotifications: false,
         centerTitle: true,
+        onBackPressed: () => Navigator.pop(context),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -80,19 +70,13 @@ class _SecurityPageState extends ConsumerState<SecurityPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Section: Email ──
-            _buildSectionHeader(
-              icon: Icons.email_outlined,
-              label: 'EMAIL',
-            ),
+            _buildSectionHeader(icon: Icons.email_outlined, label: 'EMAIL'),
             const SizedBox(height: 8),
             _buildEmailCard(),
             const SizedBox(height: 24),
 
             // ── Section: Keamanan ──
-            _buildSectionHeader(
-              icon: Icons.shield_outlined,
-              label: 'KEAMANAN',
-            ),
+            _buildSectionHeader(icon: Icons.shield_outlined, label: 'KEAMANAN'),
             const SizedBox(height: 8),
             _buildPasswordCard(),
           ],
@@ -104,10 +88,7 @@ class _SecurityPageState extends ConsumerState<SecurityPage> {
   // ─────────────────────────────────────────────
   // Widget: Section Header (ikon + label biru)
   // ─────────────────────────────────────────────
-  Widget _buildSectionHeader({
-    required IconData icon,
-    required String label,
-  }) {
+  Widget _buildSectionHeader({required IconData icon, required String label}) {
     return Row(
       children: [
         Icon(icon, size: 16, color: const Color(0xFF1A56FF)),
@@ -130,7 +111,8 @@ class _SecurityPageState extends ConsumerState<SecurityPage> {
   // ─────────────────────────────────────────────
   Widget _buildEmailCard() {
     // 👇 1. Ambil email dari provider
-    final customerEmail = ref.watch(authCustomerProvider)?.email ?? 'Email tidak ditemukan';
+    final customerEmail =
+        ref.watch(authCustomerProvider)?.email ?? 'Email tidak ditemukan';
 
     return Container(
       width: double.infinity,
@@ -155,18 +137,13 @@ class _SecurityPageState extends ConsumerState<SecurityPage> {
               // 👇 2. Hapus 'const' dan ganti teksnya jadi variabel customerEmail
               Text(
                 customerEmail,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const ChangeEmailPage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const ChangeEmailPage()),
                   );
                 },
                 child: const Text(
@@ -222,12 +199,11 @@ class _SecurityPageState extends ConsumerState<SecurityPage> {
         children: [
           // ── Header tombol expand/collapse ──
           InkWell(
-            onTap: () => setState(
-                () => _isPasswordExpanded = !_isPasswordExpanded),
+            onTap: () =>
+                setState(() => _isPasswordExpanded = !_isPasswordExpanded),
             borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -260,109 +236,116 @@ class _SecurityPageState extends ConsumerState<SecurityPage> {
                   ? Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Divider(height: 1),
-                          const SizedBox(height: 16),
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Divider(height: 1),
+                            const SizedBox(height: 16),
 
-                          // Kata Sandi Saat Ini
-                          _buildLabel('Kata Sandi Saat Ini'),
-                          const SizedBox(height: 6),
-                          _buildPasswordField(
-                            controller: _currentPassCtrl,
-                            hint: '••••••••',
-                            obscure: _obscureCurrent,
-                            onToggle: () => setState(
-                                () => _obscureCurrent = !_obscureCurrent),
-                            validator: (v) =>
-                                (v == null || v.isEmpty) ? 'Wajib diisi' : null,
-                          ),
-                          const SizedBox(height: 14),
+                            // Kata Sandi Saat Ini
+                            _buildLabel('Kata Sandi Saat Ini'),
+                            const SizedBox(height: 6),
+                            _buildPasswordField(
+                              controller: _currentPassCtrl,
+                              hint: '••••••••',
+                              obscure: _obscureCurrent,
+                              onToggle: () => setState(
+                                () => _obscureCurrent = !_obscureCurrent,
+                              ),
+                              validator: (v) => (v == null || v.isEmpty)
+                                  ? 'Wajib diisi'
+                                  : null,
+                            ),
+                            const SizedBox(height: 14),
 
-                          // Kata Sandi Baru
-                          _buildLabel('Kata Sandi Baru'),
-                          const SizedBox(height: 6),
-                          _buildPasswordField(
-                            controller: _newPassCtrl,
-                            hint: '••••••••',
-                            obscure: _obscureNew,
-                            onToggle: () =>
-                                setState(() => _obscureNew = !_obscureNew),
-                            validator: (v) {
-                              if (v == null || v.isEmpty) return 'Wajib diisi';
-                              if (v.length < 8) return 'Minimal 8 karakter';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Konfirmasi Kata Sandi Baru
-                          _buildLabel('Konfirmasi Kata Sandi Baru'),
-                          const SizedBox(height: 6),
-                          _buildPasswordField(
-                            controller: _confirmPassCtrl,
-                            hint: '••••••••',
-                            obscure: _obscureConfirm,
-                            onToggle: () => setState(
-                                () => _obscureConfirm = !_obscureConfirm),
-                            validator: (v) {
-                              if (v == null || v.isEmpty) return 'Wajib diisi';
-                              if (v != _newPassCtrl.text)
-                                return 'Kata sandi tidak cocok';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Lupa Password
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: GestureDetector(
-                              onTap: () {
-                                // TODO: navigasi ke halaman lupa password
+                            // Kata Sandi Baru
+                            _buildLabel('Kata Sandi Baru'),
+                            const SizedBox(height: 6),
+                            _buildPasswordField(
+                              controller: _newPassCtrl,
+                              hint: '••••••••',
+                              obscure: _obscureNew,
+                              onToggle: () =>
+                                  setState(() => _obscureNew = !_obscureNew),
+                              validator: (v) {
+                                if (v == null || v.isEmpty)
+                                  return 'Wajib diisi';
+                                if (v.length < 8) return 'Minimal 8 karakter';
+                                return null;
                               },
-                              child: const Text(
-                                'Lupa Password?',
-                                style: TextStyle(
-                                  color: Color(0xFF1A56FF),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
+                            const SizedBox(height: 14),
 
-                          // Tombol Simpan
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _submitChangePassword,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1A56FF),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                elevation: 0,
+                            // Konfirmasi Kata Sandi Baru
+                            _buildLabel('Konfirmasi Kata Sandi Baru'),
+                            const SizedBox(height: 6),
+                            _buildPasswordField(
+                              controller: _confirmPassCtrl,
+                              hint: '••••••••',
+                              obscure: _obscureConfirm,
+                              onToggle: () => setState(
+                                () => _obscureConfirm = !_obscureConfirm,
                               ),
-                              child: const Text(
-                                'Simpan Perubahan',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                              validator: (v) {
+                                if (v == null || v.isEmpty)
+                                  return 'Wajib diisi';
+                                if (v != _newPassCtrl.text)
+                                  return 'Kata sandi tidak cocok';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Lupa Password
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: GestureDetector(
+                                onTap: () {
+                                  // TODO: navigasi ke halaman lupa password
+                                },
+                                child: const Text(
+                                  'Lupa Password?',
+                                  style: TextStyle(
+                                    color: Color(0xFF1A56FF),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+
+                            // Tombol Simpan
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _submitChangePassword,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1A56FF),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Text(
+                                  'Simpan Perubahan',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ),
         ],
@@ -395,14 +378,13 @@ class _SecurityPageState extends ConsumerState<SecurityPage> {
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(
-          color: Colors.black38,
-          letterSpacing: 2,
-        ),
+        hintStyle: const TextStyle(color: Colors.black38, letterSpacing: 2),
         filled: true,
         fillColor: const Color(0xFFF0F0F0),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,

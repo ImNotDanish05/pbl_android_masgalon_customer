@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants/app_colors.dart';
+import 'custom_app_bar.dart';
 
 class GeneralAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -9,10 +8,9 @@ class GeneralAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
   final Color? backgroundColor;
   final VoidCallback? onBackPressed;
-
-  // 1. TAMBAHAN 2 PARAMETER BARU
   final IconData leadingIcon;
   final bool centerTitle;
+  final bool showNotifications;
 
   const GeneralAppBar({
     super.key,
@@ -21,9 +19,9 @@ class GeneralAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showBackButton = true,
     this.backgroundColor = Colors.white,
     this.onBackPressed,
-    // 2. BERIKAN NILAI DEFAULT
-    this.leadingIcon = Icons.arrow_back, // Default tetap panah
-    this.centerTitle = false, // Default tetap rata kiri
+    this.leadingIcon = Icons.arrow_back,
+    this.centerTitle = false,
+    this.showNotifications = false,
   });
 
   @override
@@ -31,32 +29,22 @@ class GeneralAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
+    return CustomAppBar(
+      title: title,
+      showBackButton: showBackButton,
+      showNotifications: showNotifications,
+      leadingIcon: leadingIcon,
       backgroundColor: backgroundColor,
-      elevation: 0,
-      centerTitle: centerTitle, // 3. MASUKKAN VARIABELNYA KE SINI
-      leading: showBackButton
-          ? IconButton(
-              // 4. UBAH ICON MENJADI DINAMIS
-              icon: Icon(leadingIcon, color: AppColors.primaryBlue),
-              onPressed:
-                  onBackPressed ??
-                  () {
-                    if (context.canPop()) {
-                      context.pop();
-                    }
-                  },
-            )
-          : null,
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: AppColors.primaryBlue,
-        ),
-      ),
+      centerTitle: centerTitle,
       actions: actions,
+      onBackPressed:
+          onBackPressed ??
+          () {
+            if (context.canPop()) {
+              context.pop();
+            }
+          },
+      titleWidget: null,
     );
   }
 }

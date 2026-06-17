@@ -5,8 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../models/order_history_model.dart';
 import '../shared/status_badge.dart';
 import '../../widgets/shared/rupiah_format.dart';
-import '../../data/chat_dummy_data.dart';
-import '../../pages/chat/chat_detail_page.dart';
+
 
 class HistoryOrderCard extends StatelessWidget {
   final HistoryOrderModel order;

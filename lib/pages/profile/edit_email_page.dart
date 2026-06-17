@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../widgets/shared/custom_app_bar.dart';
 
 class ChangeEmailPage extends StatefulWidget {
   const ChangeEmailPage({super.key});
@@ -14,10 +15,11 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
   final _formKey = GlobalKey<FormState>();
 
   // ── OTP: 6 field terpisah ──
-  final List<TextEditingController> _otpCtrls =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes =
-      List.generate(6, (_) => FocusNode());
+  final List<TextEditingController> _otpCtrls = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
+  final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
 
   // ── State ──
   bool _tokenSent = false;
@@ -94,23 +96,12 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.black87, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Ubah Email',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+      appBar: CustomAppBar(
+        title: 'Ubah Email',
+        showBackButton: true,
+        showNotifications: false,
         centerTitle: true,
+        onBackPressed: () => Navigator.pop(context),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -177,27 +168,32 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                         filled: true,
                         fillColor: const Color(0xFFF0F0F0),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 14),
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide.none,
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              const BorderSide(color: Color(0xFFD92D20)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFD92D20),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                              color: Color(0xFF1A56FF), width: 1.5),
+                            color: Color(0xFF1A56FF),
+                            width: 1.5,
+                          ),
                         ),
                       ),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Wajib diisi';
-                        final emailRegex =
-                            RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$');
-                        if (!emailRegex.hasMatch(v)) return 'Format email tidak valid';
+                        final emailRegex = RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$');
+                        if (!emailRegex.hasMatch(v))
+                          return 'Format email tidak valid';
                         return null;
                       },
                     ),
@@ -211,8 +207,9 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1A56FF),
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor:
-                              const Color(0xFF1A56FF).withOpacity(0.6),
+                          disabledBackgroundColor: const Color(
+                            0xFF1A56FF,
+                          ).withOpacity(0.6),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -229,7 +226,9 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                                 ),
                               )
                             : Text(
-                                _tokenSent ? 'Kirim Ulang Token' : 'Kirim Token',
+                                _tokenSent
+                                    ? 'Kirim Ulang Token'
+                                    : 'Kirim Token',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -264,8 +263,9 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1A56FF),
                             foregroundColor: Colors.white,
-                            disabledBackgroundColor:
-                                const Color(0xFF1A56FF).withOpacity(0.6),
+                            disabledBackgroundColor: const Color(
+                              0xFF1A56FF,
+                            ).withOpacity(0.6),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -363,7 +363,9 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(
-                    color: Color(0xFF1A56FF), width: 1.5),
+                  color: Color(0xFF1A56FF),
+                  width: 1.5,
+                ),
               ),
             ),
             onChanged: (value) {

@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import '../../core/constants/app_colors.dart';
 import '../../models/profile_model.dart';
 import '../../services/address_service.dart';
+import '../../widgets/shared/custom_app_bar.dart';
 
 class AddressFormPage extends StatefulWidget {
   /// Kalau null → mode Tambah, kalau diisi → mode Edit
@@ -120,7 +120,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
     }
   }
 
-
+  // ── NOMINATIM REVERSE GEOCODE ─────────────────────────────
   Future<void> _reverseGeocode(LatLng latlng) async {
     try {
       final url = Uri.parse(
@@ -173,7 +173,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
           if (mounted) {
             setState(() => _selectedLocation = newLatLng);
-            _mapController.move(newLatLng, 16);
+            _mapController.move(newLatLng, 16); // Terbangkan petanya!
           }
         }
       }
@@ -196,6 +196,9 @@ class _AddressFormPageState extends State<AddressFormPage> {
       );
 
       final addressService = AddressService();
+
+      // Kita gabungkan Label (Rumah/Kantor) dengan Nama yang diketik user
+      // Contoh hasil: "Rumah - Kosan Basith"
       final namaLokasiGabungan = '$_selectedLabel - ${_namaController.text}';
 
       if (_isEditMode) {
@@ -292,47 +295,11 @@ class _AddressFormPageState extends State<AddressFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        automaticallyImplyLeading: false,
-        titleSpacing: 0,
-        title: Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: AppColors.darkBlue,
-                  size: 20,
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Text(
-              _isEditMode ? 'Ubah Alamat' : 'Tambah Alamat Baru',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.darkBlue,
-              ),
-            ),
-          ],
-        ),
+      appBar: CustomAppBar(
+        title: _isEditMode ? 'Ubah Alamat' : 'Tambah Alamat Baru',
+        showBackButton: true,
+        showNotifications: false,
+        onBackPressed: () => Navigator.pop(context),
         actions: [
           // Tombol hapus hanya muncul jika sedang dalam Mode Edit (bukan tambah baru)
           if (_isEditMode)
@@ -516,6 +483,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
                             }).toList(),
                           ),
                           const SizedBox(height: 22),
+                          // 👇 SELIPKAN KEMBALI KODINGAN INI 👇
                           _buildLabel('NAMA LOKASI'),
                           const SizedBox(height: 10),
                           _buildTextField(

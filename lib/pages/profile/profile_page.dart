@@ -11,6 +11,7 @@ import '../../widgets/shared/saldo_card.dart';
 import '../../widgets/profile/voucher_section.dart';
 import '../../widgets/profile/address_section.dart';
 import '../../widgets/profile/menu_akun_section.dart';
+import '../../widgets/shared/custom_app_bar.dart';
 import '../auth/login_page.dart';
 import '../../services/address_service.dart';
 import '../../models/profile_model.dart';
@@ -147,17 +148,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          'Profil',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1A56DB),
-          ),
-        ),
+      appBar: const CustomAppBar(
+        title: 'Profil',
+        showBackButton: false,
+        showNotifications: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -165,30 +159,33 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Profil Saya
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _SectionLabel(label: 'Profil Saya'),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Color(0xFF1A56DB)),
-                    onPressed: () {
-                      // Pindah ke halaman EditProfilePage saat ikon diklik
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const EditProfilePage(),
-                        ),
-                      ).then((_) {
-                        // Blok ini akan berjalan saat user kembali dari halaman edit profil.
-                        // Kamu bisa memanggil fungsi refresh data di sini jika diperlukan agar data terbaru langsung muncul.
-                        setState(() {}); 
-                      });
-                    },
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _SectionLabel(label: 'Profil Saya'),
+                IconButton(
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    color: Color(0xFF1A56DB),
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              ProfileInfoCard(profile: profileSaatIni),
+                  onPressed: () {
+                    // Pindah ke halaman EditProfilePage saat ikon diklik
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfilePage(),
+                      ),
+                    ).then((_) {
+                      // Blok ini akan berjalan saat user kembali dari halaman edit profil.
+                      // Kamu bisa memanggil fungsi refresh data di sini jika diperlukan agar data terbaru langsung muncul.
+                      setState(() {});
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ProfileInfoCard(profile: profileSaatIni),
 
             const SizedBox(height: 20),
 
@@ -211,21 +208,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             _isLoadingAlamat
                 ? const Center(
                     child: CircularProgressIndicator(),
-                  ) 
+                  ) // Muter saat loading
                 : AddressSection(
                     addresses: _daftarAlamat,
                     onRefresh:
-                        _loadAlamat, 
+                        _loadAlamat, // (Lihat penjelasan Langkah 3 di bawah)
                   ),
             const SizedBox(height: 20),
 
             // Menu Akun
-            MenuAkunSection(
-              onTap: () {
-                context.push('/orders/history');
-              },
-              onKeluar: _handleKeluar,
-            ),
+            MenuAkunSection(onKeluar: _handleKeluar),
 
             const SizedBox(height: 16),
           ],

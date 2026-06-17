@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/profile_model.dart';
-import '../../services/voucher_service.dart'; 
+import '../../services/voucher_service.dart';
+import '../../widgets/shared/custom_app_bar.dart';
 
 class VoucherPage extends StatefulWidget {
   const VoucherPage({Key? key}) : super(key: key);
@@ -45,65 +46,63 @@ class _VoucherPageState extends State<VoucherPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.blue),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Voucher Saya', style: TextStyle(color: Colors.blue)),
+      appBar: CustomAppBar(
+        title: 'Voucher Saya',
+        showBackButton: true,
+        showNotifications: false,
+        onBackPressed: () => Navigator.pop(context),
       ),
       // 4. Logika Tampilan (Loading / Kosong / Ada Isinya)
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _vouchers.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Belum ada voucher yang tersedia untukmu saat ini.',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                )
-              : Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            fontSize: 20, 
-                            fontWeight: FontWeight.bold, 
-                            color: Color(0xFF1E3A8A)
-                          ), 
-                          children: [
-                            const TextSpan(text: 'Tersedia '),
-                            TextSpan(
-                              text: '${_vouchers.length}', // <--- Pakai variabel state
-                              style: const TextStyle(color: Colors.orange),
-                            ),
-                            const TextSpan(text: ' Voucher'),
-                          ],
+          ? const Center(
+              child: Text(
+                'Belum ada voucher yang tersedia untukmu saat ini.',
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E3A8A),
+                      ),
+                      children: [
+                        const TextSpan(text: 'Tersedia '),
+                        TextSpan(
+                          text:
+                              '${_vouchers.length}', // <--- Pakai variabel state
+                          style: const TextStyle(color: Colors.orange),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Gunakan sebelum kadaluarsa untuk lebih hemat.',
-                        style: TextStyle(color: Colors.grey, fontSize: 13),
-                      ),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: _vouchers.length,
-                          itemBuilder: (context, index) {
-                            final voucher = _vouchers[index];
-                            return _buildVoucherCard(voucher);
-                          },
-                        ),
-                      ),
-                    ],
+                        const TextSpan(text: ' Voucher'),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Gunakan sebelum kadaluarsa untuk lebih hemat.',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _vouchers.length,
+                      itemBuilder: (context, index) {
+                        final voucher = _vouchers[index];
+                        return _buildVoucherCard(voucher);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
@@ -136,7 +135,11 @@ class _VoucherPageState extends State<VoucherPage> {
                     color: Colors.blue[800],
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.local_offer, color: Colors.white, size: 28),
+                  child: const Icon(
+                    Icons.local_offer,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -144,7 +147,10 @@ class _VoucherPageState extends State<VoucherPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.blue.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(6),
@@ -169,11 +175,9 @@ class _VoucherPageState extends State<VoucherPage> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        voucher.subtitle, // <--- Memanggil deskripsi dari Supabase
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
+                        voucher
+                            .subtitle, // <--- Memanggil deskripsi dari Supabase
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -193,10 +197,16 @@ class _VoucherPageState extends State<VoucherPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 10,
+                  ),
                   minimumSize: Size.zero,
                 ),
-                child: const Text('Pakai', style: TextStyle(color: Colors.white, fontSize: 13)),
+                child: const Text(
+                  'Pakai',
+                  style: TextStyle(color: Colors.white, fontSize: 13),
+                ),
               ),
             ),
           ],
