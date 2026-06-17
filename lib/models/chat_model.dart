@@ -1,11 +1,8 @@
-// lib/models/chat_model.dart
-
 enum MessageType { text, statusPengiriman, image }
+
 enum MessageStatus { sent, delivered, read }
 
-// ==========================================
 // 1. MODEL UNTUK INFO KURIR & DAFTAR CHAT
-// ==========================================
 class ChatModel {
   final String id; // Ini akan diisi dengan order_id
   final String kurirName;
@@ -33,12 +30,12 @@ class ChatModel {
 // ==========================================
 class MessageModel {
   final String id;
-  final String orderId; 
+  final String orderId;
   final String text;
-  final bool isFromMe;  
-  final DateTime time;  
+  final bool isFromMe;
+  final DateTime time;
   final MessageType type;
-  final String? imageUrl; 
+  final List<String> imageUrl;
 
   // Untuk fitur opsional
   final String? deliveryTitle;
@@ -52,7 +49,7 @@ class MessageModel {
     required this.isFromMe,
     required this.time,
     this.type = MessageType.text,
-    this.imageUrl,
+    this.imageUrl = const [],
     this.deliveryTitle,
     this.deliverySubtitle,
     this.deliveryBadge,
@@ -61,7 +58,11 @@ class MessageModel {
   // Fungsi sakti untuk mengubah data dari Supabase jadi MessageModel
   factory MessageModel.fromJson(Map<String, dynamic> json, String myUserId) {
     final bool isMe = json['sender_id'] == myUserId;
-    final bool hasImage = json['image_url'] != null;
+    final List rawImages = json['chat_images'] ?? [];
+    final List<String> extractedImages = List<String>.from(
+      rawImages.map((img) => img['image_url'].toString()),
+    );
+    final bool hasImage = extractedImages.isNotEmpty;
 
     return MessageModel(
       id: json['id'].toString(), // Supabase UUID biasanya string
@@ -70,7 +71,7 @@ class MessageModel {
       isFromMe: isMe,
       time: DateTime.parse(json['created_at']),
       type: hasImage ? MessageType.image : MessageType.text,
-      imageUrl: json['image_url'],
+      imageUrl: extractedImages,
     );
   }
 }

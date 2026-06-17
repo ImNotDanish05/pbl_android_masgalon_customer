@@ -3,7 +3,7 @@ import '../../core/constants/app_colors.dart';
 
 class ChatInputBar extends StatefulWidget {
   final ValueChanged<String>? onSend;
-  final VoidCallback? onAttach;
+  final ValueChanged<String>? onAttach;
   const ChatInputBar({super.key, this.onSend, this.onAttach});
 
   @override
@@ -52,7 +52,11 @@ class _ChatInputBarState extends State<ChatInputBar> {
         children: [
           // Attachment button
           GestureDetector(
-            onTap: widget.onAttach,
+            onTap: () {
+              widget.onAttach?.call(_controller.text.trim());
+              _controller.clear();
+              setState(() => _hasText = false);
+            },
             child: Container(
               width: 38,
               height: 38,
@@ -80,11 +84,9 @@ class _ChatInputBarState extends State<ChatInputBar> {
                       controller: _controller,
                       decoration: const InputDecoration(
                         hintText: 'Ketik pesan...',
-                        hintStyle:
-                            TextStyle(color: Colors.grey, fontSize: 13),
+                        hintStyle: TextStyle(color: Colors.grey, fontSize: 13),
                         border: InputBorder.none,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 10),
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
                       ),
                       style: const TextStyle(fontSize: 13),
                       maxLines: null,
@@ -112,8 +114,11 @@ class _ChatInputBarState extends State<ChatInputBar> {
                 color: _hasText ? AppColors.darkBlue : Colors.grey[300],
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send_rounded,
-                  color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ],
