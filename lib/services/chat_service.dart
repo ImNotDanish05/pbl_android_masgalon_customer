@@ -182,15 +182,17 @@ class ChatService {
             ? image.name
             : image.path.split(RegExp(r'[/\\]')).last;
         final fileName =
-            '${DateTime.now().millisecondsSinceEpoch}${index}$originalName';
+            '${DateTime.now().millisecondsSinceEpoch}_${index}_$originalName';
         final pathSimpan = '$orderId/$fileName';
 
         // 1. Upload ke Storage
-        await _supabase.storage.from('chat_images').uploadBinary(
-          pathSimpan,
-          imageBytes,
-          fileOptions: const FileOptions(cacheControl: '3600'),
-        );
+        await _supabase.storage
+            .from('chat_images')
+            .uploadBinary(
+              pathSimpan,
+              imageBytes,
+              fileOptions: const FileOptions(cacheControl: '3600'),
+            );
         final String imageUrl = _supabase.storage
             .from('chat_images')
             .getPublicUrl(pathSimpan);

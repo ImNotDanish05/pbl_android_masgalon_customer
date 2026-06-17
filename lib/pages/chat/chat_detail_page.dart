@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../core/constants/app_colors.dart';
 import '../../models/chat_model.dart';
+import '../../services/chat_service.dart';
 import '../../services/chat_service.dart';
 import '../../widgets/chat/message_bubble.dart';
 import '../../widgets/chat/chat_input_bar.dart';
@@ -345,7 +348,7 @@ class ImagePreviewPage extends StatefulWidget {
   const ImagePreviewPage({
     super.key,
     required this.images,
-    this.initialCaption= '',
+    this.initialCaption = '',
   });
 
   @override
@@ -361,7 +364,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    _captionController.text= widget.initialCaption;
+    _captionController.text = widget.initialCaption;
   }
 
   @override
@@ -523,10 +526,7 @@ class _PreviewImage extends StatelessWidget {
           );
         }
 
-        return Image.memory(
-          snapshot.data!,
-          fit: BoxFit.contain,
-        );
+        return Image.memory(snapshot.data!, fit: BoxFit.contain);
       },
     );
   }
