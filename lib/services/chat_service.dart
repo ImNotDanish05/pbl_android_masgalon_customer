@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../models/chat_model.dart';
 import '../widgets/shared/date_format.dart';
 
@@ -105,6 +106,37 @@ class ChatService {
     } catch (e) {
       debugPrint('Error getDaftarChat: $e');
       return [];
+    }
+  }
+
+  Future<void> kirimGambar({
+    required String orderId,
+    required String imagePath,
+  }) async {
+    final myUserId = _supabase.auth.currentUser!.id;
+    final file = File(imagePath);
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final pathSimpan = '$orderId/$fileName';
+
+    try {
+      // 1. Upload file fisik ke Supabase Storage (Bucket bernama 'chat_images')
+      await _supabase.storage.from('chat_images').upload(pathSimpan, file);
+
+      // 2. Ambil link URL publik dari gambar yang baru diupload
+      final String imageUrl = _supabase.storage
+          .from('chat_images')
+          .getPublicUrl(pathSimpan);
+
+      // 3. Simpan link tersebut ke tabel chats
+      await _supabase.from('chats').insert({
+        'order_id': orderId,
+        'sender_id': myUserId,
+        'message': '📷 Mengirim gambar', // Teks default jika ada gambarnya
+        'image_url': imageUrl,
+      });
+    } catch (e) {
+      debugPrint('Error upload gambar: $e');
+      rethrow; // Lempar error ke UI agar bisa dimunculkan SnackBar
     }
   }
 }

@@ -3,8 +3,8 @@ import '../../core/constants/app_colors.dart';
 
 class ChatInputBar extends StatefulWidget {
   final ValueChanged<String>? onSend;
-
-  const ChatInputBar({super.key, this.onSend});
+  final VoidCallback? onAttach;
+  const ChatInputBar({super.key, this.onSend, this.onAttach});
 
   @override
   State<ChatInputBar> createState() => _ChatInputBarState();
@@ -52,7 +52,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
         children: [
           // Attachment button
           GestureDetector(
-            onTap: () {},
+            onTap: widget.onAttach,
             child: Container(
               width: 38,
               height: 38,
@@ -90,11 +90,11 @@ class _ChatInputBarState extends State<ChatInputBar> {
                       maxLines: null,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: const Icon(Icons.emoji_emotions_outlined,
-                        color: Colors.grey, size: 20),
-                  ),
+                  // GestureDetector(
+                  //   onTap: () {},
+                  //   child: const Icon(Icons.emoji_emotions_outlined,
+                  //       color: Colors.grey, size: 20),
+                  // ),
                 ],
               ),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../models/chat_model.dart';
 import '../../services/chat_service.dart'; 
 import '../../widgets/chat/message_bubble.dart';
@@ -57,6 +58,30 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+
+  Future<void> _handleKirimGambar() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      try {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mengunggah gambar...'), duration: Duration(seconds: 1)),
+        );
+
+        await _chatService.kirimGambar(
+          orderId: widget.chat.id,
+          imagePath: image.path,
+        );
+        
+        _scrollToBottom();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengirim gambar: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -131,7 +156,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       ),
       body: Column(
         children: [
-          // 👇 Ganti Expanded biasa dengan StreamBuilder
           Expanded(
             child: StreamBuilder<List<MessageModel>>(
               // Dengarkan perubahan data berdasarkan order_id
@@ -193,7 +217,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             ),
           ),
 
-          ChatInputBar(onSend: _handleSend),
+          ChatInputBar(onSend: _handleSend, onAttach: _handleKirimGambar), // 👈 Pasang handler untuk kirim gambar
         ],
       ),
     );
