@@ -185,17 +185,17 @@ class _ChatPageState extends State<ChatPage> {
                   'Tampilkan riwayat pesan lama',
                   style: TextStyle(fontSize: 13, color: Colors.grey[500]),
                 ),
-                GestureDetector(
-                  onTap: () {},
-                  child: const Text(
-                    'Lihat Arsip',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.darkBlue,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+                // GestureDetector(
+                //   onTap: () {},
+                //   child: const Text(
+                //     'Lihat Arsip',
+                //     style: TextStyle(
+                //       fontSize: 13,
+                //       color: AppColors.darkBlue,
+                //       fontWeight: FontWeight.w600,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),

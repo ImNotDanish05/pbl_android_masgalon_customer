@@ -73,7 +73,7 @@ class _GasCard extends ConsumerWidget {
                 ? Image.network(
                     product.imageUrl!,
                     fit: BoxFit
-                        .cover, // Biar gambarnya proporsional memenuhi kotak
+                        .cover,
                     // Loading animasi saat gambar sedang di-download dari internet
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../widgets/order/checkout_item_card.dart';
-import '../../providers/cart_provider.dart'; // <--- Panggil providernya
+import '../../providers/cart_provider.dart'; 
+import '../../widgets/shared/rupiah_format.dart';
 import '../../widgets/shared/custom_app_bar.dart';
 
 // Ubah jadi ConsumerWidget, tidak butuh Stateful lagi!
@@ -58,15 +59,15 @@ class CheckoutPage extends ConsumerWidget {
                     return CheckoutItemCard(
                       title: item.product.name,
                       subtitle:
-                          '${item.quantity} unit x Rp ${item.product.price}',
-                      price: 'Rp $itemTotal',
+                          '${item.quantity} unit x Rp ${item.product.price.toRupiah}',
+                      price: itemTotal.toRupiah,
                       quantity: item.quantity,
                       onIncrement: () => cartNotifier.increment(
                         index,
-                      ), // <--- Pakai fungsi provider
+                      ), 
                       onDecrement: () => cartNotifier.decrement(
                         index,
-                      ), // <--- Pakai fungsi provider
+                      ), 
                     );
                   }),
 
@@ -93,7 +94,7 @@ class CheckoutPage extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        'Rp ${cartNotifier.totalPrice}', // <--- Ambil total dari provider
+                        cartNotifier.totalPrice.toRupiah,
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
