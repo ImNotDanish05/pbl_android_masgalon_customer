@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../services/supabase_client.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/auth/auth_background.dart';
 import 'login_token_verifikasi.dart';
 
@@ -47,7 +47,7 @@ class _LupaPasswordScreenState extends ConsumerState<LupaPasswordScreen> {
     ref.read(lupaPasswordLoadingProvider.notifier).state = true;
 
     try {
-      await supabase.auth.resetPasswordForEmail(email);
+      await ref.read(authServiceProvider).sendPasswordReset(email: email);
 
       if (!mounted) return;
       Navigator.push(

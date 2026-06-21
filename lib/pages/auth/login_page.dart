@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
-import '../../services/supabase_client.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/shared/header.dart';
 import '../../widgets/auth/login_welcome_section.dart';
@@ -54,56 +53,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     ref.read(loginPageLoadingProvider.notifier).state = true;
 
     try {
-      // 2. Sign in with Supabase
-      final response = await supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-
-      if (response.user == null) {
-        ref.read(loginPageErrorProvider.notifier).state =
-            'Login gagal. Coba lagi.';
-        return;
-      }
-
-      // 3. Check role from users table — must be 'Customer'
-      final userData = await supabase
-          .from('users')
-          .select('role, avatar_url')
-          .eq('id', response.user!.id)
-          .single();
-
-      final role = userData['role'] as String?;
-      final avatarUrl = userData['avatar_url'] as String?;
-
-      // 4. If role != 'Customer' → signOut + show error
-      if (role != 'Customer') {
-        await supabase.auth.signOut();
-        if (!mounted) return;
-        ref.read(loginPageErrorProvider.notifier).state =
-            'Akun ini bukan akun customer.';
-        return;
-      }
-
-      // 5. Fetch customer data (username & saldo)
-      final customerData = await supabase
-          .from('customers')
-          .select('username, saldo_abunemen')
-          .eq('user_id', response.user!.id)
-          .single();
-
-      // 6. Store into authCustomerProvider
-      ref.read(authCustomerProvider.notifier).state = AuthCustomer(
-        id: response.user!.id,
-        email: response.user!.email ?? '',
-        username: customerData['username'] as String,
-        avatarUrl: avatarUrl,
-
-        // Menggunakan parsing aman agar tidak error numeric/int di Flutter
-        saldoAbunemen: customerData['saldo_abunemen'] != null
-            ? int.tryParse(customerData['saldo_abunemen'].toString()) ?? 0
-            : 0,
-      );
+      // Sign in using AuthCustomerNotifier login
+      await ref.read(authCustomerProvider.notifier).login(email, password);
 
       final loggedCustomer = ref.read(authCustomerProvider);
       debugPrint('========================================');
@@ -114,7 +65,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       debugPrint('Saldo    : ${loggedCustomer?.saldoAbunemen}');
       debugPrint('========================================');
 
-      // 7. Navigate to HomePage
+      // Navigate to HomePage
       if (!mounted) return;
       context.go('/home');
     } on AuthException catch (e) {

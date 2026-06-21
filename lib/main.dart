@@ -196,46 +196,21 @@ class _StartupPageState extends ConsumerState<_StartupPage> {
     }
 
     try {
-      // Cek role dulu
-      final userData = await supabase
-          .from('users')
-          .select('role, avatar_url')
-          .eq('id', session.user.id)
-          .single();
+      // Restore ke provider using notifier
+      await ref.read(authCustomerProvider.notifier).restoreSession(session);
 
-      final role = userData['role'] as String;
-      final avatarUrl = userData['avatar_url'] as String?;
-
-      if (role != 'Customer') {
-        await supabase.auth.signOut();
+      final restoredCustomer = ref.read(authCustomerProvider);
+      if (restoredCustomer == null) {
         _goToLogin();
         return;
       }
 
-      // Ambil data customer
-      final customerData = await supabase
-          .from('customers')
-          .select('username, saldo_abunemen')
-          .eq('user_id', session.user.id)
-          .single();
-
-      // Restore ke provider
-      if (!mounted) return;
-      ref.read(authCustomerProvider.notifier).state = AuthCustomer(
-        id: session.user.id,
-        email: session.user.email ?? '',
-        username: customerData['username'] as String,
-        avatarUrl: avatarUrl,
-        saldoAbunemen: customerData['saldo_abunemen'] as int? ?? 0,
-      );
-
-      final restoredCustomer = ref.read(authCustomerProvider);
       debugPrint('========================================');
       debugPrint('🔄 SESSION RESTORED');
-      debugPrint('ID       : ${restoredCustomer?.id}');
-      debugPrint('Email    : ${restoredCustomer?.email}');
-      debugPrint('Username : ${restoredCustomer?.username}');
-      debugPrint('Saldo    : ${restoredCustomer?.saldoAbunemen}');
+      debugPrint('ID       : ${restoredCustomer.id}');
+      debugPrint('Email    : ${restoredCustomer.email}');
+      debugPrint('Username : ${restoredCustomer.username}');
+      debugPrint('Saldo    : ${restoredCustomer.saldoAbunemen}');
       debugPrint('========================================');
 
       if (!mounted) return;

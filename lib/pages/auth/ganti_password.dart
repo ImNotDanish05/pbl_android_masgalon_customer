@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:password_strength/password_strength.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../services/supabase_client.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/auth/auth_background.dart';
 import 'success_screen.dart';
 
@@ -76,7 +76,7 @@ class _GantiPasswordScreenState extends ConsumerState<GantiPasswordScreen> {
     ref.read(gantiPasswordLoadingProvider.notifier).state = true;
 
     try {
-      await supabase.auth.updateUser(UserAttributes(password: newPassword));
+      await ref.read(authServiceProvider).updatePassword(newPassword: newPassword);
 
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(

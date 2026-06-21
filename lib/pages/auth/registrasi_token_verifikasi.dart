@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../services/supabase_client.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/auth/auth_background.dart';
 import 'login_page.dart';
 
@@ -91,27 +91,14 @@ class _RegistrasiTokenVerifikasiScreenState
     ref.read(registrasiTokenLoadingProvider.notifier).state = true;
 
     try {
-      // 1. Verify OTP dulu
-      await supabase.auth.verifyOTP(
+      // Verify OTP and create user/customer entries via AuthService
+      await ref.read(authServiceProvider).verifyRegisterOtp(
         email: widget.email,
         token: token,
-        type: OtpType.signup,
+        username: widget.username,
       );
 
-      // 2. Baru insert ke tabel users
-      await supabase.from('users').insert({
-        'id': supabase.auth.currentUser!.id,
-        'email': widget.email,
-        'role': 'Customer',
-      });
-
-      // 3. Baru insert ke tabel customers
-      await supabase.from('customers').insert({
-        'user_id': supabase.auth.currentUser!.id,
-        'username': widget.username,
-      });
-
-      // 4. Baru navigate
+      // Navigate
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -246,8 +233,7 @@ class _RegistrasiTokenVerifikasiScreenState
   Future<void> _resendToken() async {
     if (!_canResend) return;
     try {
-      await supabase.auth.resend(
-        type: OtpType.signup,
+      await ref.read(authServiceProvider).resendRegisterOtp(
         email: widget.email,
       );
       _startResendTimer();
