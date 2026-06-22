@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/chat_dummy_data.dart';
 import '../../services/chat_service.dart';
 import '../../models/chat_model.dart';
 import '../../widgets/chat/chat_filter_tabs.dart';
 import '../../widgets/chat/chat_list_item.dart';
+import '../../widgets/shared/custom_app_bar.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import 'chat_detail_page.dart';
 
-class ChatPage extends StatefulWidget {
+class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({super.key});
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  ConsumerState<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends ConsumerState<ChatPage> {
   int _currentNavIndex = 3;
   String _selectedFilter = 'Semua';
   final _searchController = TextEditingController();
@@ -61,30 +63,16 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final customer = ref.watch(authCustomerProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          'Chat',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.darkBlue,
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.grey[200],
-              child: const Icon(Icons.person, color: Colors.grey, size: 20),
-            ),
-          ),
-        ],
+      appBar: CustomAppBar(
+        title: 'Chat',
+        showLogo: true,
+        showNotifications: true,
+        showProfileAvatar: true,
+        profileImageUrl: customer?.avatarUrl,
       ),
       body: Column(
         children: [

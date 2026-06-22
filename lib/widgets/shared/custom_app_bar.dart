@@ -73,7 +73,7 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
       centerTitle: centerTitle,
       automaticallyImplyLeading: false,
       titleSpacing: showBackButton ? 0 : 16,
-      leadingWidth: showBackButton ? 50 : (showProfileAvatar ? 60 : 16),
+      leadingWidth: showBackButton ? 50 : 16,
       leading: showBackButton
           ? IconButton(
               icon: Icon(leadingIcon, color: AppColors.darkBlue),
@@ -84,39 +84,6 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       context.pop();
                     }
                   },
-            )
-          : showProfileAvatar
-          ? Padding(
-              padding: const EdgeInsets.only(left: 8.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.grey[200],
-                      backgroundImage: imageProvider,
-                      child: imageProvider == null
-                          ? const Icon(Icons.person, color: Colors.grey)
-                          : null,
-                    ),
-                    if (isOnline != null)
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: isOnline! ? Colors.green : Colors.grey,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
             )
           : null,
       title: titleWidget != null
@@ -155,7 +122,6 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 : null),
       actions: [
         ...?actions,
-        // Show notifications hanya jika user sudah login DAN showNotifications = true
         if (isLoggedIn && showNotifications)
           IconButton(
             icon: const Icon(
@@ -163,6 +129,37 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
               color: Colors.black87,
             ),
             onPressed: () => _showNotifications(context),
+          ),
+        if (showProfileAvatar)
+          Padding(
+            padding: const EdgeInsets.only(right: 12.0),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.grey[200],
+                  backgroundImage: imageProvider,
+                  child: imageProvider == null
+                      ? const Icon(Icons.person, color: Colors.grey)
+                      : null,
+                ),
+                if (isOnline != null)
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: isOnline! ? Colors.green : Colors.grey,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
       ],
     );
