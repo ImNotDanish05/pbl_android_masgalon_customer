@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../data/detail_order_dummy.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../models/chat_model.dart';
+import '../../pages/chat/chat_detail_page.dart';
 
 // ==========================================
 // 1. status_pesanan_card.dart
 // ==========================================
 class StatusPesananCard extends StatelessWidget {
-  const StatusPesananCard({super.key});
+  final Map<String, dynamic> detailData;
+
+  const StatusPesananCard({super.key, required this.detailData});
 
   @override
   Widget build(BuildContext context) {
+    // Merapikan tulisan status (Mencari_Kurir -> Mencari Kurir)
+    final rawStatus = detailData['status']?.toString() ?? '';
+    final statusText = rawStatus.replaceAll('_', ' ').toUpperCase();
+    final orderId =
+        detailData['id']?.toString().substring(0, 8).toUpperCase() ?? '-';
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -29,15 +38,15 @@ class StatusPesananCard extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFEDD5), // Orange pucat
+                  color: const Color(0xFFFFEDD5),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  OrderDetailDummy.status,
+                  statusText,
                   style: GoogleFonts.poppins(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFFEA580C), // Orange tegas
+                    color: const Color(0xFFEA580C),
                   ),
                 ),
               ),
@@ -57,7 +66,7 @@ class StatusPesananCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Pesanan #${OrderDetailDummy.orderId}',
+            'Pesanan #$orderId',
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -65,61 +74,8 @@ class StatusPesananCard extends StatelessWidget {
             ),
           ),
           Text(
-            'Estimasi tiba: ${OrderDetailDummy.eta}',
+            'Pesanan sedang diproses sistem',
             style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textGrey),
-          ),
-          const SizedBox(height: 20),
-
-          // Progress Bar Sederhana
-          Stack(
-            children: [
-              Container(
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              FractionallySizedBox(
-                // Jika step 1: 0.33, step 2: 0.66, step 3: 1.0
-                widthFactor: OrderDetailDummy.progressStep * 0.33,
-                child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryBlue,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'DIPROSES',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  color: AppColors.textGrey,
-                ),
-              ),
-              Text(
-                'DIKIRIM',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryBlue,
-                ),
-              ),
-              Text(
-                'SELESAI',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  color: AppColors.textGrey,
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -131,10 +87,48 @@ class StatusPesananCard extends StatelessWidget {
 // 2. kurir_card.dart
 // ==========================================
 class KurirCard extends StatelessWidget {
-  const KurirCard({super.key});
+  final Map<String, dynamic> detailData;
+  const KurirCard({super.key, required this.detailData});
 
   @override
   Widget build(BuildContext context) {
+    // Tarik data kurir (bisa null jika belum ada kurir)
+    final courierData = detailData['couriers'];
+
+    if (courierData == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8),
+          ],
+        ),
+        child: Row(
+          children: [
+            const CircularProgressIndicator(strokeWidth: 2),
+            const SizedBox(width: 16),
+            Text(
+              'Sedang mencari kurir terbaik...',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: AppColors.textGrey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Jika kurir sudah ada
+    final userData = courierData['users'] ?? {};
+    final driverName =
+        userData['username'] ?? courierData['nama_asli'] ?? 'Kurir';
+    final avatarUrl = userData['avatar_url']?.toString() ?? '';
+    final platNomor = courierData['plat_nomor'] ?? '-';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -148,7 +142,13 @@ class KurirCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundImage: NetworkImage(OrderDetailDummy.driverImage),
+            backgroundColor: AppColors.lightBlue,
+            backgroundImage: avatarUrl.isNotEmpty
+                ? NetworkImage(avatarUrl)
+                : null,
+            child: avatarUrl.isEmpty
+                ? const Icon(Icons.person, color: AppColors.primaryBlue)
+                : null,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -156,7 +156,7 @@ class KurirCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  OrderDetailDummy.driverName,
+                  driverName,
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -164,10 +164,14 @@ class KurirCard extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.stars, color: Colors.orange, size: 14),
+                    const Icon(
+                      Icons.motorcycle,
+                      color: Colors.orange,
+                      size: 14,
+                    ),
                     const SizedBox(width: 4),
                     Text(
-                      '${OrderDetailDummy.driverRating} • ${OrderDetailDummy.driverRole}',
+                      platNomor,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: AppColors.textGrey,
@@ -178,16 +182,42 @@ class KurirCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.lightBlue,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.chat_bubble_outline,
-              color: AppColors.darkBlue,
-              size: 20,
+// Bungkus dengan Material & InkWell agar ada efek klik (ripple) yang rapi
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(50), // Efek klik bulat
+              onTap: () {
+                // 👇 1. Ambil data dari variabel yang sudah ada di KurirCard
+                final chatRoom = ChatModel(
+                  id: detailData['id'].toString(), // Ambil ID dari detailData
+                  kurirName: driverName,           // driverName sudah dideklarasikan di atasnya
+                  kurirAvatar: avatarUrl,          // avatarUrl juga sudah ada di atasnya
+                  lastMessage: '',
+                  time: '',
+                  isOnline: true,
+                );
+
+                // 👇 2. Pindah ke halaman chat
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChatDetailPage(chat: chatRoom),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: AppColors.lightBlue,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.chat_outlined, // Boleh pakai chat_outlined juga
+                  color: AppColors.primaryBlue, // Sesuaikan warna dengan tema aplikasimu
+                  size: 20,
+                ),
+              ),
             ),
           ),
         ],
@@ -200,10 +230,15 @@ class KurirCard extends StatelessWidget {
 // 3. alamat_pengiriman_card.dart
 // ==========================================
 class AlamatPengirimanCard extends StatelessWidget {
-  const AlamatPengirimanCard({super.key});
+  final Map<String, dynamic> detailData;
+  const AlamatPengirimanCard({super.key, required this.detailData});
 
   @override
   Widget build(BuildContext context) {
+    final addressLabel = detailData['address_label'] ?? 'Alamat Rumah';
+    final addressDetail =
+        detailData['address_detail'] ?? 'Detail tidak tersedia';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -218,7 +253,7 @@ class AlamatPengirimanCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            OrderDetailDummy.addressLabel,
+            addressLabel,
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.w600,
               fontSize: 14,
@@ -226,7 +261,7 @@ class AlamatPengirimanCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            OrderDetailDummy.addressDetail,
+            addressDetail,
             style: GoogleFonts.poppins(
               fontSize: 12,
               color: AppColors.textGrey,
@@ -235,12 +270,10 @@ class AlamatPengirimanCard extends StatelessWidget {
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
-            child: DashedDivider(
-              color: AppColors.borderColor,
-            ), // Custom widget di bawah
+            child: DashedDivider(color: AppColors.borderColor),
           ),
           Text(
-            OrderDetailDummy.addressNote,
+            'Titipkan di depan pintu jika tidak ada orang', // Opsional, bisa pakai field note DB kalau ada
             style: GoogleFonts.poppins(
               fontSize: 11,
               color: AppColors.textGrey,
@@ -257,23 +290,18 @@ class AlamatPengirimanCard extends StatelessWidget {
 // 4. detail_barang_card.dart
 // ==========================================
 class DetailBarangCard extends StatelessWidget {
-  const DetailBarangCard({super.key});
+  final Map<String, dynamic> detailData;
+  const DetailBarangCard({super.key, required this.detailData});
 
-  // PINDAHKAN FUNGSI INI KE SINI
   String _formatRupiah(int value) {
-    final str = value.toString();
-    final buffer = StringBuffer();
-    int count = 0;
-    for (int i = str.length - 1; i >= 0; i--) {
-      if (count > 0 && count % 3 == 0) buffer.write('.');
-      buffer.write(str[i]);
-      count++;
-    }
-    return 'Rp ${buffer.toString().split('').reversed.join()}';
+    return 'Rp ${value.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
 
   @override
   Widget build(BuildContext context) {
+    // Tarik list barang dari relasi DB
+    final itemsData = detailData['order_items'] as List<dynamic>? ?? [];
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -284,7 +312,15 @@ class DetailBarangCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        children: OrderDetailDummy.items.map((item) {
+        children: itemsData.map((item) {
+          final productData = item['products'] ?? {};
+          final productName = productData['nama'] ?? 'Produk';
+          final pricePerUnit =
+              (productData['harga_dasar'] as num?)?.toInt() ?? 0;
+          final quantity = (item['quantity'] as num?)?.toInt() ?? 1;
+          final subtotal = (item['subtotal'] as num?)?.toInt() ?? 0;
+          final isGas = productName.toLowerCase().contains('gas');
+
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Row(
@@ -293,11 +329,11 @@ class DetailBarangCard extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppColors.bgColor,
+                    color: AppColors.lightBlue,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    item.imageUrl == 'galon' ? Icons.water_drop : Icons.propane,
+                    isGas ? Icons.propane : Icons.water_drop,
                     color: AppColors.primaryBlue,
                   ),
                 ),
@@ -307,15 +343,14 @@ class DetailBarangCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.name,
+                        productName,
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
                       ),
                       Text(
-                        // Sekarang fungsi ini bisa dipanggil tanpa error!
-                        '${item.quantity} Unit x ${_formatRupiah(item.pricePerUnit)}',
+                        '$quantity Unit x ${_formatRupiah(pricePerUnit)}',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: AppColors.textGrey,
@@ -325,7 +360,7 @@ class DetailBarangCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  _formatRupiah(item.totalPrice),
+                  _formatRupiah(subtotal),
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
@@ -344,22 +379,31 @@ class DetailBarangCard extends StatelessWidget {
 // 5. informasi_pembayaran_card.dart
 // ==========================================
 class InformasiPembayaranCard extends StatelessWidget {
-  const InformasiPembayaranCard({super.key});
+  final Map<String, dynamic> detailData;
+  const InformasiPembayaranCard({super.key, required this.detailData});
 
-  // TAMBAHKAN FUNGSI RUPIAH DI SINI JUGA
   String _formatRupiah(int value) {
-    final str = value.toString();
-    final buffer = StringBuffer();
-    int count = 0;
-    for (int i = str.length - 1; i >= 0; i--) {
-      if (count > 0 && count % 3 == 0) buffer.write('.');
-      buffer.write(str[i]);
-      count++;
-    }
-    return 'Rp ${buffer.toString().split('').reversed.join()}';
+    return 'Rp ${value.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
 
-  // PINDAHKAN WIDGET HELPER INI KE SINI
+  String _formatDate(DateTime dt) {
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}, ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
   Widget _buildPaymentRow(
     String label,
     String value, {
@@ -386,6 +430,24 @@ class InformasiPembayaranCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Kalkulasi Matematika
+    final totalHarga = (detailData['total_harga'] as num?)?.toInt() ?? 0;
+    final itemsData = detailData['order_items'] as List<dynamic>? ?? [];
+
+    int subtotalBarang = 0;
+    for (var item in itemsData) {
+      subtotalBarang += (item['subtotal'] as num?)?.toInt() ?? 0;
+    }
+
+    // Karena kita tidak menyimpan ongkir di DB, kita hitung selisihnya
+    final ongkir = totalHarga - subtotalBarang;
+
+    // 2. Data Lainnya
+    final metodePembayaran = detailData['metode_pembayaran'] ?? 'Tunai';
+    final rawDate =
+        detailData['created_at']?.toString() ?? DateTime.now().toString();
+    final parsedDate = DateTime.parse(rawDate).toLocal();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -397,21 +459,11 @@ class InformasiPembayaranCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Sekarang error merahnya akan hilang!
-          _buildPaymentRow(
-            'Subtotal',
-            _formatRupiah(OrderDetailDummy.subtotal),
-          ),
+          _buildPaymentRow('Subtotal', _formatRupiah(subtotalBarang)),
           const SizedBox(height: 8),
           _buildPaymentRow(
             'Biaya Pengantaran',
-            _formatRupiah(OrderDetailDummy.deliveryFee),
-          ),
-          const SizedBox(height: 8),
-          _buildPaymentRow(
-            'Promo "${OrderDetailDummy.promoCode}"',
-            '-${_formatRupiah(OrderDetailDummy.discount)}',
-            isDiscount: true,
+            _formatRupiah(ongkir > 0 ? ongkir : 0),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
@@ -442,7 +494,7 @@ class InformasiPembayaranCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        OrderDetailDummy.paymentMethod,
+                        metodePembayaran,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -453,7 +505,7 @@ class InformasiPembayaranCard extends StatelessWidget {
                 ],
               ),
               Text(
-                _formatRupiah(OrderDetailDummy.totalPayment),
+                _formatRupiah(totalHarga),
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -464,7 +516,7 @@ class InformasiPembayaranCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            OrderDetailDummy.orderTimestamp,
+            _formatDate(parsedDate),
             style: GoogleFonts.poppins(fontSize: 10, color: AppColors.textGrey),
           ),
         ],
@@ -473,6 +525,9 @@ class InformasiPembayaranCard extends StatelessWidget {
   }
 }
 
+// ==========================================
+// 6. DashedDivider
+// ==========================================
 class DashedDivider extends StatelessWidget {
   final Color color;
   const DashedDivider({super.key, required this.color});

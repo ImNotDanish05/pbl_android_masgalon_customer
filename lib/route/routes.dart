@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:pbl_android_masgalon_customer/models/order_model.dart';
 
 import '../pages/auth/login_page.dart';
 import '../pages/auth/registrasi.dart';
@@ -32,7 +33,8 @@ class AppRouter {
     redirect: (context, state) {
       final session = supabase.auth.currentSession;
       final isLoggedIn = session != null;
-      final isOnAuthPage = state.matchedLocation == '/login' ||
+      final isOnAuthPage =
+          state.matchedLocation == '/login' ||
           state.matchedLocation == '/register' ||
           state.matchedLocation == '/register/verify' ||
           state.matchedLocation == '/forgot-password' ||
@@ -159,7 +161,10 @@ class AppRouter {
       GoRoute(
         path: '/orders/detail',
         name: 'order-detail',
-        builder: (context, state) => const OrderDetailPage(),
+        builder: (context, state) {
+          final order = state.extra as OrderModel;
+          return OrderDetailPage(order: order);
+        },
       ),
       GoRoute(
         path: '/orders-success',
@@ -167,7 +172,7 @@ class AppRouter {
         builder: (context, state) {
           final data = state.extra as Map<String, dynamic>? ?? {};
           return PaymentSuccessPage(transactionData: data);
-        }
+        },
       ),
       GoRoute(
         path: '/upload-receipt',
@@ -187,7 +192,10 @@ class AppRouter {
       GoRoute(
         path: '/track-order',
         name: 'track-order',
-        builder: (context, state) => const TrackOrderPage(),
+        builder: (context, state) {
+          final order = state.extra as OrderModel; // 👈 Tangkap paketnya
+          return TrackOrderPage(order: order); // 👈 Serahkan ke halaman Peta
+        },
       ),
     ],
   );
