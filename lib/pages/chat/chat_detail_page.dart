@@ -190,73 +190,31 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leadingWidth: 40,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
+      appBar: CustomAppBar(
+        showLogo: false,
+        showNotifications: false,
+        showBackButton: true,
+        titleWidget: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage: AssetImage(widget.chat.kurirAvatar),
-                  onBackgroundImageError: (_, __) {},
-                  child: const Icon(Icons.person, color: Colors.white),
-                ),
-                if (widget.chat.isOnline)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
-                  ),
-              ],
+            Text(
+              widget.chat.kurirName.split('–').first.trim(),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
             ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.chat.kurirName.split('–').first.trim(),
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
-                ),
-                Text(
-                  widget.chat.isOnline ? 'Online' : 'Offline',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: widget.chat.isOnline
-                        ? Colors.green
-                        : Colors.grey[400],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+            Text(
+              widget.chat.isOnline ? 'Online' : 'Offline',
+              style: TextStyle(
+                fontSize: 11,
+                color: widget.chat.isOnline ? Colors.green : Colors.grey[400],
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black87),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Column(
         children: [
