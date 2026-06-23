@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../models/chat_model.dart';
 import '../../services/chat_service.dart';
 import '../../services/chat_service.dart';
+import '../../widgets/shared/custom_app_bar.dart';
 import '../../widgets/chat/message_bubble.dart';
 import '../../widgets/chat/chat_input_bar.dart';
 
