@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
-import '../../services/supabase_client.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/shared/header.dart';
 import '../../widgets/shared/bottom_navbar.dart';
 import '../../widgets/shared/form.dart';
@@ -76,40 +76,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     ref.read(registrasiLoadingProvider.notifier).state = true;
 
     try {
-      // Step 1: Try signUp
-      final response = await supabase.auth.signUp(
+      // Step 1: Try signUp via AuthService
+      await ref.read(authServiceProvider).signUp(
         email: email,
         password: password,
-      );
-
-      final user = response.user;
-      if (user == null) {
-        ref.read(registrasiErrorProvider.notifier).state =
-            'Registrasi gagal. Coba lagi.';
-        return;
-      }
-
-      // Step 2: Check if already fully registered in our users table
-      final existingUser = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', user.id)
-          .maybeSingle();
-
-      if (existingUser != null) {
-        // User sudah terdaftar lengkap → block
-        await supabase.auth.signOut();
-        if (!mounted) return;
-        ref.read(registrasiErrorProvider.notifier).state =
-            'Email sudah terdaftar. Silakan login.';
-        return;
-      }
-
-      // Step 3: Not in users table yet (new or zombie account)
-      // Resend OTP agar fresh, lalu ke token screen
-      await supabase.auth.resend(
-        type: OtpType.signup,
-        email: email,
       );
 
       if (!mounted) return;

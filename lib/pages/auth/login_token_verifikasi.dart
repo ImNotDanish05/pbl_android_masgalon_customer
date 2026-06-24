@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../services/supabase_client.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/auth/auth_background.dart';
 import 'ganti_password.dart';
 
@@ -86,10 +86,9 @@ class _LoginTokenVerifikasiScreenState
     ref.read(loginTokenLoadingProvider.notifier).state = true;
 
     try {
-      await supabase.auth.verifyOTP(
+      await ref.read(authServiceProvider).verifyResetOtp(
         email: widget.email,
         token: token,
-        type: OtpType.recovery,
       );
 
       if (!mounted) return;
@@ -212,7 +211,9 @@ class _LoginTokenVerifikasiScreenState
   Future<void> _resendToken() async {
     if (!_canResend) return;
     try {
-      await supabase.auth.resetPasswordForEmail(widget.email);
+      await ref.read(authServiceProvider).sendPasswordReset(
+        email: widget.email,
+      );
       _startResendTimer();
       for (final c in _controllers) {
         c.clear();

@@ -5,7 +5,6 @@ import '../../models/product_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/katalog_service.dart';
-import '../../services/supabase_client.dart';
 import '../../widgets/home/floating_cart_button.dart';
 import '../../widgets/home/gas_section.dart';
 import '../../widgets/home/home_app_bar.dart';
@@ -79,8 +78,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     debugPrint('========================================');
     debugPrint('LOGOUT');
     debugPrint('========================================');
-    await supabase.auth.signOut();
-    ref.read(authCustomerProvider.notifier).state = null;
+    await ref.read(authCustomerProvider.notifier).logout();
 
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(

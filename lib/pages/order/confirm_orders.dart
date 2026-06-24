@@ -125,8 +125,8 @@ class _ConfirmOrderPageState extends ConsumerState<ConfirmOrderPage> {
 
       // Potong saldo
       if (_selectedPayment == 'Abunemen') {
-        ref.read(authCustomerProvider.notifier).state = customer.copyWith(
-          saldoAbunemen: customer.saldoAbunemen - totalBayar,
+        ref.read(authCustomerProvider.notifier).updateSaldo(
+          customer.saldoAbunemen - totalBayar,
         );
       }
 

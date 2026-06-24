@@ -92,13 +92,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       );
 
       // 3. Refresh provider dengan data terbaru
-      final customer = ref.read(authCustomerProvider);
-      if (customer != null) {
-        ref.read(authCustomerProvider.notifier).state = customer.copyWith(
-          username: _usernameController.text,
-          avatarUrl: newAvatarUrl ?? customer.avatarUrl,
-        );
-      }
+      ref.read(authCustomerProvider.notifier).updateProfile(
+        username: _usernameController.text,
+        avatarUrl: newAvatarUrl,
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

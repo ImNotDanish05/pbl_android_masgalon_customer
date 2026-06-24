@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/dummy_data.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/supabase_client.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../../widgets/profile/profile_info_card.dart';
 import '../../widgets/shared/saldo_card.dart';
@@ -122,9 +121,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     debugPrint('Email    : ${ref.read(authCustomerProvider)?.email}');
     debugPrint('========================================');
 
-    // Clear session
-    await supabase.auth.signOut();
-    ref.read(authCustomerProvider.notifier).state = null;
+    // Clear session via AuthCustomerNotifier
+    await ref.read(authCustomerProvider.notifier).logout();
 
     debugPrint('✅ Session cleared, navigating to LoginPage');
 
