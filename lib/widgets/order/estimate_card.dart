@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../data/dummy_track.dart';
 
 class EstimateCard extends StatelessWidget {
-  const EstimateCard({super.key});
+  final Map<String, dynamic> detailData; // 👈 Tambahkan penangkap data
+
+  const EstimateCard({super.key, required this.detailData});
 
   @override
   Widget build(BuildContext context) {
+    // Mengecek status pesanan untuk menyesuaikan estimasi
+    final status = detailData['status']?.toString() ?? '';
+    String estimasiWaktu = 'Menunggu Kurir';
+    String estimasiJarak = '-';
+
+    if (status == 'Diantar') {
+      estimasiWaktu = '15 - 20 Menit'; // Angka perkiraan statis
+      estimasiJarak = '± 2.5 KM';
+    } else if (status == 'Selesai') {
+      estimasiWaktu = 'Telah Tiba';
+      estimasiJarak = '0 KM';
+    }
+
     return Container(
-      // Margin diatur agar rapi di atas layar
       margin: const EdgeInsets.only(top: 24, left: 24, right: 24),
-      // Padding diperkecil agar tingginya ringkas seperti CustomButton
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -26,11 +38,8 @@ class EstimateCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Ikon Jam
           Container(
-            padding: const EdgeInsets.all(
-              10,
-            ), // Padding ikon dikecilkan sedikit
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: const Color(0xFFEBF3FF),
               borderRadius: BorderRadius.circular(12),
@@ -42,11 +51,8 @@ class EstimateCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-
-          // Waktu Estimasi
           Expanded(
             child: Column(
-              // 🔴 INI KUNCI UTAMANYA: Mencegah kotak melar ke bawah
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -59,7 +65,7 @@ class EstimateCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  TrackOrderDummy.estimateTime,
+                  estimasiWaktu, // 👈 Pakai variabel dinamis
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -69,18 +75,13 @@ class EstimateCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // Garis Pembatas
           Container(
-            height: 36, // Tinggi garis dibatasi secara eksplisit
+            height: 36,
             width: 1,
             color: Colors.grey.withOpacity(0.3),
             margin: const EdgeInsets.symmetric(horizontal: 16),
           ),
-
-          // Jarak
           Column(
-            // 🔴 KUNCI UTAMA JUGA DI SINI
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -93,7 +94,7 @@ class EstimateCard extends StatelessWidget {
                 ),
               ),
               Text(
-                TrackOrderDummy.distance,
+                estimasiJarak, // 👈 Pakai variabel dinamis
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

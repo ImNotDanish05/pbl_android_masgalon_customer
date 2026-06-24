@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../pages/profile/security_page.dart'; 
@@ -30,7 +31,9 @@ class MenuAkunSection extends StatelessWidget {
           iconColor: const Color(0xFF0D52A1),
           title: 'Riwayat Transaksi',
           subtitle: 'Lihat semua pesanan sebelumnya',
-          onTap: () {},
+          onTap: () {
+            context.push('/orders/history');
+          },
           showArrow: true,
         ),
         const SizedBox(height: 10),

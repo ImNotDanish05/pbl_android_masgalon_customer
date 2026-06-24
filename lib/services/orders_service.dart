@@ -126,4 +126,32 @@ class OrderService {
       return [];
     }
   }
+
+  // 👇 Tambahkan fungsi ini untuk menarik detail pesanan secara spesifik
+  Future<Map<String, dynamic>> getOrderDetail(String orderId) async {
+    try {
+      final response = await _supabase
+          .from('orders')
+          .select('''
+            *,
+            couriers (
+              nama_asli,
+              plat_nomor,
+              users (username, avatar_url)
+            ),
+            order_items (
+              quantity,
+              subtotal,
+              products (nama, image_url, harga_dasar)
+            )
+          ''')
+          .eq('id', orderId)
+          .single(); // Pakai .single() karena kita hanya butuh 1 data pesanan
+
+      return response;
+    } catch (e) {
+      debugPrint('Error getOrderDetail: $e');
+      rethrow;
+    }
+  }
 }

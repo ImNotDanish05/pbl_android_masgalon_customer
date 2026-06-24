@@ -1,16 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../data/dummy_track.dart';
-import 'shared/rupiah_format.dart'; 
 import 'package:go_router/go_router.dart';
-import '../pages/order/track_order_page.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../models/order_model.dart'; // 👈 Import Model
+import 'shared/rupiah_format.dart';
 
 class DriverInfoSheet extends StatelessWidget {
-  const DriverInfoSheet({super.key});
+  final Map<String, dynamic> detailData; // Untuk isi data layar
+  final OrderModel order; // Untuk dilempar saat tombol Rincian diklik
+
+  const DriverInfoSheet({
+    super.key,
+    required this.detailData,
+    required this.order,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // 1. Ekstrak Data Kurir
+    final courierData = detailData['couriers'];
+    final userData = courierData != null ? courierData['users'] : null;
+    final driverName =
+        userData?['username'] ??
+        courierData?['nama_asli'] ??
+        'Mencari Kurir...';
+    final avatarUrl = userData?['avatar_url']?.toString() ?? '';
+    final isKurirAda = courierData != null;
+
+    // 2. Ekstrak Data Pesanan
+    final itemsData = detailData['order_items'] as List<dynamic>? ?? [];
+    // Menggabungkan semua nama produk menjadi 1 kalimat (Contoh: "Galon, Gas 3kg")
+    String orderItemNames = itemsData
+        .map((item) => item['products']['nama'])
+        .join(', ');
+    if (orderItemNames.isEmpty) orderItemNames = 'Pesanan';
+
+    final totalHarga = (detailData['total_harga'] as num?)?.toInt() ?? 0;
+    final statusText = (detailData['status']?.toString() ?? '')
+        .replaceAll('_', ' ')
+        .toUpperCase();
+    final metodePembayaran = detailData['metode_pembayaran'] ?? 'Tunai';
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
@@ -27,43 +57,44 @@ class DriverInfoSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 1. Profil Driver & Tombol Chat
+          // 1. Profil Driver
           Row(
             children: [
-              // Avatar
               Stack(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 28,
-                    backgroundColor: Colors.grey,
-                    backgroundImage: NetworkImage(
-                      'https://i.pravatar.cc/150?img=11',
-                    ), // Dummy foto
+                    backgroundColor: AppColors.lightBlue,
+                    backgroundImage: avatarUrl.isNotEmpty
+                        ? NetworkImage(avatarUrl)
+                        : null,
+                    child: avatarUrl.isEmpty
+                        ? const Icon(Icons.person, color: AppColors.primaryBlue)
+                        : null,
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                  if (isKurirAda) // Hanya munculkan titik hijau kalau kurirnya sudah ada
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
               const SizedBox(width: 16),
-
-              // Info Nama
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      TrackOrderDummy.driverName,
+                      driverName,
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -72,21 +103,25 @@ class DriverInfoSheet extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.star, color: Colors.orange, size: 16),
+                        Icon(
+                          Icons.star,
+                          color: isKurirAda ? Colors.orange : Colors.grey,
+                          size: 16,
+                        ),
                         const SizedBox(width: 4),
                         Text(
-                          TrackOrderDummy.driverRating,
+                          isKurirAda ? '4.9' : '-', // Rating statis sementara
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.orange,
+                            color: isKurirAda ? Colors.orange : Colors.grey,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text('•', style: TextStyle(color: AppColors.textGrey)),
                         const SizedBox(width: 8),
                         Text(
-                          TrackOrderDummy.driverRole,
+                          isKurirAda ? 'Kurir Mas Galon' : 'Sistem',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: AppColors.textGrey,
@@ -106,16 +141,17 @@ class DriverInfoSheet extends StatelessWidget {
           Row(
             children: [
               _buildInfoBox(
-                icon: Icons.water_drop_outlined,
+                icon: Icons.inventory_2_outlined,
                 title: 'ISI PESANAN',
-                content: TrackOrderDummy.orderItem,
-                subContent: 'Total: ${TrackOrderDummy.orderTotal.toRupiah}',
+                content: orderItemNames,
+                subContent:
+                    'Total: ${totalHarga.toRupiah}', // Pastikan ekstensi .toRupiah ini ada di file rupiah_format.dart
               ),
               const SizedBox(width: 16),
               _buildInfoBox(
                 icon: Icons.local_shipping_outlined,
                 title: 'STATUS KURIR',
-                content: TrackOrderDummy.courierStatus,
+                content: statusText,
               ),
             ],
           ),
@@ -150,7 +186,7 @@ class DriverInfoSheet extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        TrackOrderDummy.paymentMethod,
+                        metodePembayaran,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -162,7 +198,8 @@ class DriverInfoSheet extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  context.push('/orders/detail');
+                  // 👇 Pindah ke detail sambil bawa tas ekstra
+                  context.push('/orders/detail', extra: order);
                 },
                 child: Text(
                   'Rincian Pesanan >',
@@ -214,6 +251,9 @@ class DriverInfoSheet extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               content,
+              maxLines:
+                  1, // Agar nama barang tidak merusak layout jika kepanjangan
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,

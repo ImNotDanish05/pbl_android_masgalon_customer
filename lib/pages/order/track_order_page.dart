@@ -5,26 +5,39 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../data/dummy_track.dart';
+import '../../models/order_model.dart'; 
+import '../../services/orders_service.dart'; 
+import '../../widgets/shared/custom_app_bar.dart';
 import '../../widgets/order/estimate_card.dart';
 import '../../widgets/driver_info_sheet.dart';
 
-class TrackOrderPage extends StatelessWidget {
-  const TrackOrderPage({super.key});
+class TrackOrderPage extends StatefulWidget {
+  final OrderModel order; // 👈 Siapkan penangkap tas ransel data
+
+  const TrackOrderPage({super.key, required this.order});
+
+  @override
+  State<TrackOrderPage> createState() => _TrackOrderPageState();
+}
+
+class _TrackOrderPageState extends State<TrackOrderPage> {
+  final _orderService = OrderService();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      
+      // 👇 1. MENGGUNAKAN CUSTOM APP BAR
+      appBar: CustomAppBar(
+        showBackButton: true,
+        showNotifications: false,
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primaryBlue),
-          onPressed: () => context.pop(),
-        ),
-        title: Column(
+        onBackPressed: () => context.pop(),
+        // Gunakan titleWidget karena kita butuh 2 baris (Judul & ID)
+        titleWidget: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'Lacak Pesanan',
@@ -35,7 +48,7 @@ class TrackOrderPage extends StatelessWidget {
               ),
             ),
             Text(
-              'ID #${TrackOrderDummy.orderId}',
+              'ID #${widget.order.id.substring(0, 8).toUpperCase()}', 
               style: GoogleFonts.poppins(
                 fontSize: 10,
                 color: AppColors.textGrey,
@@ -43,58 +56,79 @@ class TrackOrderPage extends StatelessWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline, color: AppColors.primaryBlue),
-            onPressed: () {},
-          ),
-        ],
+
       ),
 
-      // Menggunakan Stack untuk menumpuk Peta dan UI
-      body: Stack(
-        children: [
-          // 1. LAPISAN BAWAH: Peta OpenStreetMap
-          FlutterMap(
-            options: MapOptions(
-              initialCenter:
-                  TrackOrderDummy.driverLocation, // Titik tengah peta
-              initialZoom: 15.0, // Skala zoom
-            ),
+      // 👇 2. MENARIK DATA KOORDINAT DARI DATABASE
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _orderService.getOrderDetail(widget.order.id),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Gagal memuat peta: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data == null) {
+            return const Center(child: Text('Data tidak ditemukan'));
+          }
+
+          final detailData = snapshot.data!;
+
+          // Ambil titik Latitude & Longitude dari Database
+          // Jika kosong, sistem otomatis mengarahkan ke koordinat cadangan (titik tengah Tembalang, Semarang)
+          final lat = (detailData['address_lat'] as num?)?.toDouble() ?? -7.0493;
+          final lng = (detailData['address_long'] as num?)?.toDouble() ?? 110.4208;
+          final targetLocation = LatLng(lat, lng);
+
+          return Stack(
             children: [
-              TileLayer(
-                // URL ajaib untuk memanggil peta gratis dari OSM
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.masgalon.app',
-              ),
-              MarkerLayer(
-                markers: [
-                  Marker(
-                    point: TrackOrderDummy.driverLocation,
-                    width: 40,
-                    height: 40,
-                    // Icon pin lokasi di peta
-                    child: const Icon(
-                      Icons.location_pin,
-                      color: Colors.red,
-                      size: 40,
-                    ),
+              // LAPISAN BAWAH: Peta OpenStreetMap
+              FlutterMap(
+                options: MapOptions(
+                  initialCenter: targetLocation, // Peta otomatis fokus ke alamat
+                  initialZoom: 16.0,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.masgalon.app',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: targetLocation, // Pin diletakkan di alamat tujuan
+                        width: 40,
+                        height: 40,
+                        child: const Icon(
+                          Icons.location_pin,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+
+              // LAPISAN ATAS: Kartu Estimasi Waktu
+              SafeArea(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  // Nanti lempar detailData ke dalam sini: EstimateCard(detailData: detailData)
+                  child: EstimateCard(detailData:detailData), 
+                ),
+              ),
+
+              // LAPISAN BAWAH: Kartu Info Kurir
+              Align(
+                alignment: Alignment.bottomCenter,
+                // Nanti lempar detailData ke dalam sini: DriverInfoSheet(detailData: detailData)
+                child: DriverInfoSheet(detailData: detailData, order: widget.order), 
+              ),
             ],
-          ),
-
-        
-          const SafeArea(
-            child: Align(alignment: Alignment.topCenter, child: EstimateCard()),
-          ),
-
-          const Align(
-            alignment: Alignment.bottomCenter,
-            child: DriverInfoSheet(),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

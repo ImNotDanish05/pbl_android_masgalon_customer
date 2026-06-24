@@ -1,35 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
-import '../../data/dummy_data.dart';
-import '../../widgets/shared/general_app_bar.dart'; // Pastikan path ini benar!
+import '../../models/order_model.dart';
+import '../../services/orders_service.dart';
+import '../../providers/auth_provider.dart';
+import '../../widgets/shared/general_app_bar.dart';
 import '../../widgets/order/history_order_card.dart';
 
-class HistoryOrderPage extends StatefulWidget {
+class HistoryOrderPage extends ConsumerStatefulWidget {
   const HistoryOrderPage({super.key});
 
   @override
-  State<HistoryOrderPage> createState() => _HistoryOrderPageState();
+  ConsumerState<HistoryOrderPage> createState() => _HistoryOrderPageState();
 }
 
-class _HistoryOrderPageState extends State<HistoryOrderPage> {
+class _HistoryOrderPageState extends ConsumerState<HistoryOrderPage> {
   int _selectedTabIndex = 0; // 0 = Aktif, 1 = Selesai
+  final _orderService = OrderService();
 
   @override
   Widget build(BuildContext context) {
-    // Ambil data dari dummy berdasarkan tab yang dipilih
-    final listPesanan = _selectedTabIndex == 0
-        ? DummyData.activeOrders
-        : DummyData.completedOrders;
+    // Ambil ID User yang sedang login
+    final customer = ref.watch(authCustomerProvider);
+    final userId = customer?.id ?? '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Abu-abu background terang
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: GeneralAppBar(
         title: 'Riwayat Pesanan',
-        onBackPressed: () {
-          context.pop();
-        },
+        onBackPressed: () => context.pop(),
         actions: [
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.black87),
@@ -39,92 +40,143 @@ class _HistoryOrderPageState extends State<HistoryOrderPage> {
       ),
       body: Column(
         children: [
-          // Custom Tab Bar (Segmented Control)
           _buildCustomTabBar(),
 
-          // Daftar Pesanan
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                // Header Dinamis (Pesanan Berjalan / Selesai Baru-baru Ini)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _orderService.getRiwayatPesanan(),
+              builder: (context, snapshot) {
+                // Tampilan saat loading
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                // Tampilan saat error
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Gagal memuat pesanan: ${snapshot.error}'),
+                  );
+                }
+                final rawData = snapshot.data ?? [];
+                final allOrders = rawData
+                    .map((json) => OrderModel.fromMap(json))
+                    .toList();
+                final activeOrders = allOrders
+                    .where(
+                      (order) =>
+                          order.status != OrderStatus.selesai &&
+                          order.status != OrderStatus.tolak,
+                    )
+                    .toList();
+
+                final completedOrders = allOrders
+                    .where(
+                      (order) =>
+                          order.status == OrderStatus.selesai ||
+                          order.status == OrderStatus.tolak,
+                    )
+                    .toList();
+
+                // Pilih list mana yang mau ditampilkan berdasarkan Tab
+                final listPesanan = _selectedTabIndex == 0
+                    ? activeOrders
+                    : completedOrders;
+
+                if (listPesanan.isEmpty) {
+                  return Center(
+                    child: Text(
                       _selectedTabIndex == 0
-                          ? 'Pesanan Berjalan'
-                          : 'Selesai Baru-baru Ini',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
-                      ),
+                          ? 'Belum ada pesanan aktif.'
+                          : 'Belum ada pesanan selesai.',
+                      style: const TextStyle(color: Colors.grey),
                     ),
-                    if (_selectedTabIndex == 0) // Badge "2 Aktif"
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.lightBlue,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${DummyData.activeOrders.length} Aktif',
+                  );
+                }
+
+                return ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _selectedTabIndex == 0
+                              ? 'Pesanan Berjalan'
+                              : 'Selesai Baru-baru Ini',
                           style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primaryBlue,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textDark,
                           ),
                         ),
+                        if (_selectedTabIndex == 0) // Badge "X Aktif"
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.lightBlue,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${activeOrders.length} Aktif',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryBlue,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Render List Kartu Pesanan
+                    ...listPesanan.map((order) {
+                      return HistoryOrderCard(
+                        order: order,
+                        formatRupiah: (harga) {
+                          return 'Rp ${harga.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+                        },
+                      );
+                    }).toList(), // Hapus .toList() jika pakai spread operator (...)
+
+                    const SizedBox(height: 40),
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF3F4F6),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.inventory_2_outlined,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Menampilkan ${listPesanan.length} pesanan terakhir',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
                   ],
-                ),
-                const SizedBox(height: 16),
-                ...listPesanan.map((order) {
-                  return HistoryOrderCard(
-                    order: order,
-                    onLacakTap: () {
-                      context.push('/track-order');
-                    },
-                  );
-                }).toList(),
-                const SizedBox(height: 40),
-                Center(
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF3F4F6),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.inventory_2_outlined,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Menampilkan ${listPesanan.length} pesanan terakhir',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                );
+              },
             ),
           ),
         ],
       ),
     );
   }
-
 
   Widget _buildCustomTabBar() {
     return Container(

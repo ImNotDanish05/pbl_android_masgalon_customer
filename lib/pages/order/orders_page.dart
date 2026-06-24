@@ -6,7 +6,7 @@ import '../../widgets/shared/saldo_card.dart';
 import '../../services/orders_service.dart';
 import '../../models/order_model.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
-import '../../widgets/order/order_history_card.dart';
+import '../../widgets/order/history_order_card.dart';
 import '../../widgets/shared/section_header.dart';
 import '../../providers/auth_provider.dart';
 
@@ -84,7 +84,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
                   children: pesananList.map((pesananData) {
                     final order = OrderModel.fromMap(pesananData);
 
-                    return OrderHistoryCard(
+                    return HistoryOrderCard(
                       order: order,
                       formatRupiah: formatPrice,
                     );

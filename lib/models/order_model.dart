@@ -81,7 +81,7 @@ class OrderModel {
       default:
         parsedStatus = OrderStatus.mencariKurir; // Default jaga-jaga
     }
-    final courierData = map['courier'] ?? {};
+    final courierData = map['couriers'] ?? {};
     String? namaKurir;
     String? avatarKurir;
 
