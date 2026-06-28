@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth/auth_service.dart';
+import '../services/notification/fcm_token_service.dart';
+import '../services/notification/notification_service.dart';
 
 // Model data customer yang sedang login
 class AuthCustomer {
@@ -62,10 +64,21 @@ class AuthCustomerNotifier extends StateNotifier<AuthCustomer?> {
       return;
     }
     state = customer;
+
+    // Upload FCM token ke Supabase agar notifikasi bisa dikirim ke device ini
+    final fcmToken = await NotificationService.getToken();
+    if (fcmToken != null) {
+      await FcmTokenService.uploadToken(customer.id, fcmToken);
+    }
   }
 
   // Aksi logout
   Future<void> logout() async {
+    // Hapus token dari Supabase agar device ini tidak lagi menerima notifikasi
+    final fcmToken = await NotificationService.getToken();
+    if (fcmToken != null) {
+      await FcmTokenService.deleteToken(fcmToken);
+    }
     await _authService.signOut();
     state = null;
   }
@@ -107,6 +120,12 @@ class AuthCustomerNotifier extends StateNotifier<AuthCustomer?> {
 
       state = customer;
       debugPrint('✅ Session restored: ${customer.username}');
+
+      // Re-upload FCM token saat restore session (token bisa saja expired/berubah)
+      final fcmToken = await NotificationService.getToken();
+      if (fcmToken != null) {
+        await FcmTokenService.uploadToken(customer.id, fcmToken);
+      }
     } catch (e) {
       debugPrint('❌ Gagal restore session: $e → auto logout');
       await _authService.signOut();

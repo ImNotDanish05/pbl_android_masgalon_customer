@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/supabase_client.dart';
 import 'providers/auth_provider.dart';
 import 'route/routes.dart';
+import 'services/notification/notification_service.dart';
+
+// GlobalKey untuk navigasi dari luar widget tree (notification tap routing)
+final navigatorKey = GlobalKey<NavigatorState>();
 
 // ─────────────────────────────────────────────────────────────
 // Required keys that MUST be present in .env
@@ -53,6 +58,17 @@ void main() async {
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+
+  // ── 5. Init Firebase & Notification Service ────────────
+  // CATATAN: Memerlukan file google-services.json di android/app/
+  // Jika belum ada, baris ini akan throw error saat startup.
+  try {
+    await Firebase.initializeApp();
+    await NotificationService.init(navigatorKey);
+  } catch (e) {
+    debugPrint('⚠️ Firebase belum dikonfigurasi: $e');
+    // App tetap berjalan tanpa notifikasi jika Firebase belum di-setup
+  }
 
   runApp(const ProviderScope(child: MyApp()));
 }
