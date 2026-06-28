@@ -5,12 +5,13 @@ import '../../models/product_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/katalog_service.dart';
-import '../../widgets/home/floating_cart_button.dart';
 import '../../widgets/home/gas_section.dart';
 import '../../widgets/home/home_app_bar.dart';
 import '../../widgets/home/home_search_bar.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../../widgets/shared/saldo_card.dart';
+import '../../widgets/shared/rupiah_format.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../auth/login_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -102,24 +103,10 @@ class _HomePageState extends ConsumerState<HomePage> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 150),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text('Halo, ${customer?.username ?? 'Customer'}!'),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.logout),
-                      color: Colors.black87,
-                      tooltip: 'Keluar',
-                      onPressed: _handleLogout,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
                 HomeSearchBar(hintText: 'Cari galon atau gas...'),
                 const SizedBox(height: 16),
                 SaldoCard(
@@ -137,11 +124,75 @@ class _HomePageState extends ConsumerState<HomePage> {
               ],
             ),
           ),
-          Positioned(
-            bottom: 90,
-            right: 20,
-            child: FloatingCartButton(itemCount: cartItems.length),
-          ),
+          if (cartItems.isNotEmpty)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total Pesanan Terpilih:',
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey[700],
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${cartItems.fold<int>(0, (sum, item) => sum + item.quantity)} Item (${ref.read(cartProvider.notifier).totalPrice.toRupiah})',
+                      style: GoogleFonts.poppins(
+                        color: Colors.black87,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0D52A1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          context.push('/confirm-order');
+                        },
+                        child: Text(
+                          'Beli Sekarang',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
       bottomNavigationBar: MainBottomNavBar(

@@ -6,6 +6,7 @@ import '../../providers/cart_provider.dart';
 import '../../models/product_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../shared/section_header.dart';
+import 'cart_bottom_sheet.dart';
 
 class ProductSection extends StatelessWidget {
   final List<ProductModel> products;
@@ -46,6 +47,11 @@ class _GasCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cartItems = ref.watch(cartProvider);
+    final cartItemIndex = cartItems.indexWhere((item) => item.product.name == product.name);
+    final isInCart = cartItemIndex != -1;
+    final quantity = isInCart ? cartItems[cartItemIndex].quantity : 0;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -140,36 +146,71 @@ class _GasCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    ref.read(cartProvider.notifier).addToCart(product);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  splashColor: AppColors.primaryBlue.withOpacity(0.6),
-                  hoverColor: Colors.transparent,
-                  highlightColor: AppColors.primaryBlue.withOpacity(0.6),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      'Tambah',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textDark,
+              isInCart
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline, size: 22),
+                          color: Colors.blue[800],
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            ref.read(cartProvider.notifier).decrement(cartItemIndex);
+                          },
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text(
+                            '$quantity',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline, size: 22),
+                          color: Colors.blue[800],
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            ref.read(cartProvider.notifier).increment(cartItemIndex);
+                          },
+                        ),
+                      ],
+                    )
+                  : Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          ref.read(cartProvider.notifier).addToCart(product);
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        splashColor: AppColors.primaryBlue.withOpacity(0.6),
+                        hoverColor: Colors.transparent,
+                        highlightColor: AppColors.primaryBlue.withOpacity(0.6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'Tambah',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ),
             ],
           ),
         ],
