@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/profile_model.dart';
-import '../../services/voucher_service.dart';
+import '../../services/order/voucher_service.dart';
 import '../../widgets/shared/custom_app_bar.dart';
 
 class VoucherPage extends StatefulWidget {

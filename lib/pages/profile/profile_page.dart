@@ -12,9 +12,9 @@ import '../../widgets/profile/address_section.dart';
 import '../../widgets/profile/menu_akun_section.dart';
 import '../../widgets/shared/custom_app_bar.dart';
 import '../auth/login_page.dart';
-import '../../services/address_service.dart';
+import '../../services/profile/address_service.dart';
 import '../../models/profile_model.dart';
-import '../../services/voucher_service.dart';
+import '../../services/order/voucher_service.dart';
 import 'edit_profile_page.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {

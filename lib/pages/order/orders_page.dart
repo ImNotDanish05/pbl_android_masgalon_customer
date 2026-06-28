@@ -3,12 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/shared/main_head_bar.dart';
 import '../../widgets/shared/saldo_card.dart';
-import '../../services/orders_service.dart';
+import '../../services/order/orders_service.dart';
 import '../../models/order_model.dart';
 import '../../widgets/shared/main_bottom_nav_bar.dart';
 import '../../widgets/order/history_order_card.dart';
 import '../../widgets/shared/section_header.dart';
 import '../../providers/auth_provider.dart';
+import '../../route/routes.dart';
 
 class OrdersPage extends ConsumerStatefulWidget {
   const OrdersPage({super.key});
@@ -17,9 +18,39 @@ class OrdersPage extends ConsumerStatefulWidget {
   ConsumerState<OrdersPage> createState() => _OrdersPageState();
 }
 
-class _OrdersPageState extends ConsumerState<OrdersPage> {
+class _OrdersPageState extends ConsumerState<OrdersPage> with RouteAware {
   int _currentNavIndex = 1;
   final OrderService _ordersService = OrderService();
+  late Future<List<Map<String, dynamic>>> _ordersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _loadData();
+  }
+
+  void _loadData() {
+    setState(() {
+      _ordersFuture = _ordersService.getRiwayatPesanan();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +80,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
             ),
             const SizedBox(height: 14),
             FutureBuilder<List<Map<String, dynamic>>>(
-              future: _ordersService.getRiwayatPesanan(),
+              future: _ordersFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(

@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:pbl_android_masgalon_customer/models/order_model.dart';
+import '../main.dart';
 
 import '../pages/auth/login_page.dart';
 import '../pages/auth/registrasi.dart';
@@ -25,12 +26,18 @@ import '../pages/topup/topup_page.dart';
 import '../pages/order/voucher_page.dart';
 import '../pages/chat/chat_page.dart';
 import '../services/supabase_client.dart';
+import 'package:flutter/material.dart';
 import '../pages/chat/chat_detail_page.dart';
+
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/startup',
+    observers: [routeObserver],
     redirect: (context, state) {
+      if (state.matchedLocation == '/startup') return null;
+
       final session = supabase.auth.currentSession;
       final isLoggedIn = session != null;
       final isOnAuthPage =
@@ -56,6 +63,11 @@ class AppRouter {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/startup',
+        name: 'startup',
+        builder: (context, state) => const StartupPage(),
+      ),
       //Auth
       GoRoute(
         path: '/login',

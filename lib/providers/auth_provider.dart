@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth/auth_service.dart';
@@ -48,7 +49,18 @@ class AuthCustomerNotifier extends StateNotifier<AuthCustomer?> {
 
   // Aksi login
   Future<void> login(String email, String password) async {
-    final customer = await _authService.signIn(email: email, password: password);
+    final customer = await _authService.signIn(
+      email: email,
+      password: password,
+    );
+
+    // Kalau profile gagal di-fetch → jangan set state
+    if (customer == null || customer.id.isEmpty) {
+      debugPrint('❌ Login berhasil tapi profile null');
+      await _authService.signOut();
+      state = null;
+      return;
+    }
     state = customer;
   }
 
@@ -82,17 +94,33 @@ class AuthCustomerNotifier extends StateNotifier<AuthCustomer?> {
 
   // Aksi restore session saat startup
   Future<void> restoreSession(Session session) async {
-    final customer = await _authService.restoreSession(session);
-    state = customer;
+    try {
+      final customer = await _authService.restoreSession(session);
+
+      // Profile null atau ID kosong → paksa logout
+      if (customer == null || customer.id.isEmpty) {
+        debugPrint('⚠️ Session ada tapi profile null → auto logout');
+        await _authService.signOut();
+        state = null;
+        return;
+      }
+
+      state = customer;
+      debugPrint('✅ Session restored: ${customer.username}');
+    } catch (e) {
+      debugPrint('❌ Gagal restore session: $e → auto logout');
+      await _authService.signOut();
+      state = null;
+    }
   }
 }
 
 // Provider utama — null berarti belum login
 final authCustomerProvider =
     StateNotifierProvider<AuthCustomerNotifier, AuthCustomer?>((ref) {
-  final authService = ref.watch(authServiceProvider);
-  return AuthCustomerNotifier(authService);
-});
+      final authService = ref.watch(authServiceProvider);
+      return AuthCustomerNotifier(authService);
+    });
 
 // Provider helper
 final isLoggedInProvider = Provider<bool>((ref) {

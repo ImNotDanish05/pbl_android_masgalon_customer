@@ -4,10 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/order_model.dart';
-import '../../services/orders_service.dart';
+import '../../services/order/orders_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/shared/general_app_bar.dart';
 import '../../widgets/order/history_order_card.dart';
+import '../../route/routes.dart';
 
 class HistoryOrderPage extends ConsumerStatefulWidget {
   const HistoryOrderPage({super.key});
@@ -16,9 +17,39 @@ class HistoryOrderPage extends ConsumerStatefulWidget {
   ConsumerState<HistoryOrderPage> createState() => _HistoryOrderPageState();
 }
 
-class _HistoryOrderPageState extends ConsumerState<HistoryOrderPage> {
+class _HistoryOrderPageState extends ConsumerState<HistoryOrderPage> with RouteAware {
   int _selectedTabIndex = 0; // 0 = Aktif, 1 = Selesai
   final _orderService = OrderService();
+  late Future<List<Map<String, dynamic>>> _ordersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _loadData();
+  }
+
+  void _loadData() {
+    setState(() {
+      _ordersFuture = _orderService.getRiwayatPesanan();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +75,7 @@ class _HistoryOrderPageState extends ConsumerState<HistoryOrderPage> {
 
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _orderService.getRiwayatPesanan(),
+              future: _ordersFuture,
               builder: (context, snapshot) {
                 // Tampilan saat loading
                 if (snapshot.connectionState == ConnectionState.waiting) {

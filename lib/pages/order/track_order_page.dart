@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../models/order_model.dart'; 
-import '../../services/orders_service.dart'; 
+import '../../services/order/orders_service.dart'; 
 import '../../widgets/shared/custom_app_bar.dart';
 import '../../widgets/order/estimate_card.dart';
 import '../../widgets/driver_info_sheet.dart';
@@ -22,6 +22,13 @@ class TrackOrderPage extends StatefulWidget {
 
 class _TrackOrderPageState extends State<TrackOrderPage> {
   final _orderService = OrderService();
+  late Future<Map<String, dynamic>> _orderDetailFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _orderDetailFuture = _orderService.getOrderDetail(widget.order.id);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +68,7 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
 
       // 👇 2. MENARIK DATA KOORDINAT DARI DATABASE
       body: FutureBuilder<Map<String, dynamic>>(
-        future: _orderService.getOrderDetail(widget.order.id),
+        future: _orderDetailFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

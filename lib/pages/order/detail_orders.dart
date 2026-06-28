@@ -5,7 +5,8 @@ import '../../widgets/shared/section_header.dart';
 import '../../widgets/bottom_action.dart';
 import '../../widgets/order/order_detail_widget.dart';
 import '../../models/order_model.dart'; // 👈 1. Import OrderModel
-import '../../services/orders_service.dart'; // 👈 2. Import Service
+import '../../services/order/orders_service.dart'; // 👈 2. Import Service
+import '../../route/routes.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final OrderModel order; // 👈 3. Siapkan keranjang penangkap data dari halaman sebelumnya
@@ -16,8 +17,38 @@ class OrderDetailPage extends StatefulWidget {
   State<OrderDetailPage> createState() => _OrderDetailPageState();
 }
 
-class _OrderDetailPageState extends State<OrderDetailPage> {
+class _OrderDetailPageState extends State<OrderDetailPage> with RouteAware {
   final _orderService = OrderService();
+  late Future<Map<String, dynamic>> _orderDetailFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _loadData();
+  }
+
+  void _loadData() {
+    setState(() {
+      _orderDetailFuture = _orderService.getOrderDetail(widget.order.id);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +61,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       ),
       // 👇 4. Gunakan FutureBuilder untuk mengambil rincian lengkap dari DB
       body: FutureBuilder<Map<String, dynamic>>(
-        future: _orderService.getOrderDetail(widget.order.id),
+        future: _orderDetailFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

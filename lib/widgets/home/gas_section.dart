@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/cart_provider.dart';
 import '../../models/product_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../shared/section_header.dart';
-import '../../core/constants/app_colors.dart';
 
 class ProductSection extends StatelessWidget {
   final List<ProductModel> products;
@@ -70,26 +70,22 @@ class _GasCard extends ConsumerWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                ? Image.network(
-                    product.imageUrl!,
-                    fit: BoxFit
-                        .cover,
-                    // Loading animasi saat gambar sedang di-download dari internet
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const Center(
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: CachedNetworkImage(
+                      imageUrl: product.imageUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const Center(
                         child: SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                      );
-                    },
-
-                    // jika link eror
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.broken_image_outlined,
-                      color: Colors.grey,
+                      ),
+                      errorWidget: (context, url, error) => const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.grey,
+                      ),
                     ),
                   )
                 : const Icon(

@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/profile_service.dart';
+import '../../services/profile/profile_service.dart';
 import '../../widgets/shared/custom_app_bar.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {

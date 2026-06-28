@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 // Sesuaikan import ini jika file modelmu ada di tempat lain
-import '../models/profile_model.dart'; 
+import '../../models/profile_model.dart'; 
 
 class VoucherService {
   final _supabase = Supabase.instance.client;

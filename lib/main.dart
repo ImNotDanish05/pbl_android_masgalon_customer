@@ -171,14 +171,14 @@ class MyApp extends StatelessWidget {
 // Startup: session check lives in GoRouter redirect (see routes.dart)
 // This splash widget is shown at /startup before the redirect fires
 // ─────────────────────────────────────────────────────────────
-class _StartupPage extends ConsumerStatefulWidget {
-  const _StartupPage();
+class StartupPage extends ConsumerStatefulWidget {
+  const StartupPage({super.key});
 
   @override
-  ConsumerState<_StartupPage> createState() => _StartupPageState();
+  ConsumerState<StartupPage> createState() => StartupPageState();
 }
 
-class _StartupPageState extends ConsumerState<_StartupPage> {
+class StartupPageState extends ConsumerState<StartupPage> {
   @override
   void initState() {
     super.initState();

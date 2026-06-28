@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/chat_model.dart';
 import '../shared/date_format.dart';
@@ -236,10 +237,17 @@ class _ImageBubble extends StatelessWidget {
                   ), // Jarak antar gambar
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      url, // 👈 Ambil url satu per satu dari dalam List
+                    child: CachedNetworkImage(
+                      imageUrl: url, // 👈 Ambil url satu per satu dari dalam List
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      placeholder: (context, url) => Container(
+                        height: 160,
+                        color: Colors.grey[200],
+                        child: const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
                         height: 160,
                         color: Colors.grey[200],
                         child: const Icon(

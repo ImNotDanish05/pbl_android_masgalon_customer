@@ -1,6 +1,6 @@
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/topup_model.dart';
+import '../../models/topup_model.dart';
 
 class TopupService {
   final _supabase = Supabase.instance.client;

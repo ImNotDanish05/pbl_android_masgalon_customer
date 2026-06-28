@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import '../../core/constants/app_colors.dart';
 import '../../models/profile_model.dart';
-import '../../services/address_service.dart';
+import '../../services/profile/address_service.dart';
 import '../../widgets/shared/custom_app_bar.dart';
 
 class AddressFormPage extends StatefulWidget {
@@ -25,12 +25,11 @@ class _AddressFormPageState extends State<AddressFormPage> {
   final _alamatController = TextEditingController();
   final _mapController = MapController();
 
-  // Default koordinat: Jakarta Selatan
-  LatLng _selectedLocation = const LatLng(-6.2607, 106.7816);
-
-  String _selectedLabel = 'Rumah';
-  bool _isUtama = false;
-  bool _isLoadingLocation = false;
+  // ValueNotifiers for performance tracking without full screen rebuilds
+  late final ValueNotifier<LatLng> _selectedLocationNotifier;
+  late final ValueNotifier<String> _selectedLabelNotifier;
+  late final ValueNotifier<bool> _isUtamaNotifier;
+  late final ValueNotifier<bool> _isLoadingLocationNotifier;
 
   bool get _isEditMode => widget.existingAddress != null;
 
@@ -39,6 +38,10 @@ class _AddressFormPageState extends State<AddressFormPage> {
   @override
   void initState() {
     super.initState();
+
+    LatLng initialLoc = const LatLng(-6.2607, 106.7816);
+    String initialLabel = 'Rumah';
+    bool initialUtama = false;
 
     if (_isEditMode) {
       final addr = widget.existingAddress!;
@@ -49,44 +52,48 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
         // Cek apakah kata pertamanya cocok dengan opsi label kita (Rumah/Kantor/Apartemen)
         if (_labelOptions.contains(parts[0])) {
-          _selectedLabel = parts[0];
-        } else {
-          _selectedLabel = 'Rumah';
+          initialLabel = parts[0];
         }
 
         // Masukkan sisa katanya ke dalam kolom input Nama Lokasi
-        // (.sublist dipakai untuk berjaga-jaga kalau nama lokasinya kebetulan mengandung tanda strip juga)
         _namaController.text = parts.sublist(1).join(' - ');
       } else {
         _namaController.text = addr.name;
-        _selectedLabel = 'Rumah';
       }
       _alamatController.text = addr.detail;
-      _isUtama = addr.isUtama;
-      // Langsung arahkan peta ke koordinat alamat yang sedang diedit
-      _selectedLocation = LatLng(addr.lat, addr.long);
+      initialUtama = addr.isUtama;
+      initialLoc = LatLng(addr.lat, addr.long);
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _useCurrentLocation();
       });
     }
+
+    _selectedLocationNotifier = ValueNotifier<LatLng>(initialLoc);
+    _selectedLabelNotifier = ValueNotifier<String>(initialLabel);
+    _isUtamaNotifier = ValueNotifier<bool>(initialUtama);
+    _isLoadingLocationNotifier = ValueNotifier<bool>(false);
   }
 
   @override
   void dispose() {
     _namaController.dispose();
     _alamatController.dispose();
+    _selectedLocationNotifier.dispose();
+    _selectedLabelNotifier.dispose();
+    _isUtamaNotifier.dispose();
+    _isLoadingLocationNotifier.dispose();
     super.dispose();
   }
 
   // ── TAP MAP → pindah marker + reverse geocode ─────────────
   Future<void> _onMapTap(TapPosition tapPos, LatLng latlng) async {
-    setState(() => _selectedLocation = latlng);
+    _selectedLocationNotifier.value = latlng;
     await _reverseGeocode(latlng);
   }
 
   Future<void> _useCurrentLocation() async {
-    setState(() => _isLoadingLocation = true);
+    _isLoadingLocationNotifier.value = true;
 
     try {
       // 1. Cek & minta permission
@@ -108,7 +115,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
       final latlng = LatLng(position.latitude, position.longitude);
 
       // 3. Update marker & pindah kamera map
-      setState(() => _selectedLocation = latlng);
+      _selectedLocationNotifier.value = latlng;
       _mapController.move(latlng, 16);
 
       // 4. Reverse geocode → isi inputan alamat
@@ -116,7 +123,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
     } catch (e) {
       _showSnackbar('Gagal mendapatkan lokasi: $e');
     } finally {
-      if (mounted) setState(() => _isLoadingLocation = false);
+      _isLoadingLocationNotifier.value = false;
     }
   }
 
@@ -141,7 +148,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
         final displayName = data['display_name'] as String?;
 
         if (displayName != null && mounted) {
-          setState(() => _alamatController.text = displayName);
+          _alamatController.text = displayName;
         }
       }
     } catch (e) {
@@ -172,7 +179,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
           final newLatLng = LatLng(lat, lon);
 
           if (mounted) {
-            setState(() => _selectedLocation = newLatLng);
+            _selectedLocationNotifier.value = newLatLng;
             _mapController.move(newLatLng, 16); // Terbangkan petanya!
           }
         }
@@ -199,24 +206,24 @@ class _AddressFormPageState extends State<AddressFormPage> {
 
       // Kita gabungkan Label (Rumah/Kantor) dengan Nama yang diketik user
       // Contoh hasil: "Rumah - Kosan Basith"
-      final namaLokasiGabungan = '$_selectedLabel - ${_namaController.text}';
+      final namaLokasiGabungan = '${_selectedLabelNotifier.value} - ${_namaController.text}';
 
       if (_isEditMode) {
         await addressService.ubahAlamat(
           idAlamat: widget.existingAddress!.id,
           label: namaLokasiGabungan,
           detail: _alamatController.text,
-          lat: _selectedLocation.latitude,
-          long: _selectedLocation.longitude,
-          isUtama: _isUtama,
+          lat: _selectedLocationNotifier.value.latitude,
+          long: _selectedLocationNotifier.value.longitude,
+          isUtama: _isUtamaNotifier.value,
         );
       } else {
         await addressService.tambahAlamat(
           label: namaLokasiGabungan,
           detail: _alamatController.text,
-          lat: _selectedLocation.latitude,
-          long: _selectedLocation.longitude,
-          isUtama: _isUtama,
+          lat: _selectedLocationNotifier.value.latitude,
+          long: _selectedLocationNotifier.value.longitude,
+          isUtama: _isUtamaNotifier.value,
         );
       }
 
@@ -329,7 +336,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
                     FlutterMap(
                       mapController: _mapController,
                       options: MapOptions(
-                        initialCenter: _selectedLocation,
+                        initialCenter: _selectedLocationNotifier.value,
                         initialZoom: 15,
                         onTap: _onMapTap,
                       ),
@@ -339,19 +346,24 @@ class _AddressFormPageState extends State<AddressFormPage> {
                               'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                           userAgentPackageName: 'com.masgalon.app',
                         ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              point: _selectedLocation,
-                              width: 40,
-                              height: 40,
-                              child: const Icon(
-                                Icons.location_pin,
-                                color: AppColors.darkBlue,
-                                size: 40,
-                              ),
-                            ),
-                          ],
+                        ValueListenableBuilder<LatLng>(
+                          valueListenable: _selectedLocationNotifier,
+                          builder: (context, location, child) {
+                            return MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: location,
+                                  width: 40,
+                                  height: 40,
+                                  child: const Icon(
+                                    Icons.location_pin,
+                                    color: AppColors.darkBlue,
+                                    size: 40,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -360,56 +372,61 @@ class _AddressFormPageState extends State<AddressFormPage> {
                     Positioned(
                       bottom: 32,
                       right: 16,
-                      child: GestureDetector(
-                        onTap: _isLoadingLocation ? null : _useCurrentLocation,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.12),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: _isLoadingLocationNotifier,
+                        builder: (context, isLoadingLocation, child) {
+                          return GestureDetector(
+                            onTap: isLoadingLocation ? null : _useCurrentLocation,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
                               ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Loading spinner atau icon
-                              _isLoadingLocation
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.darkBlue,
-                                      ),
-                                    )
-                                  : const Icon(
-                                      Icons.my_location,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.12),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Loading spinner atau icon
+                                  isLoadingLocation
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppColors.darkBlue,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.my_location,
+                                          color: AppColors.darkBlue,
+                                          size: 16,
+                                        ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    isLoadingLocation
+                                        ? 'Mencari lokasi...'
+                                        : 'Gunakan Lokasi Saat Ini',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                       color: AppColors.darkBlue,
-                                      size: 16,
                                     ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _isLoadingLocation
-                                    ? 'Mencari lokasi...'
-                                    : 'Gunakan Lokasi Saat Ini',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.darkBlue,
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -443,47 +460,51 @@ class _AddressFormPageState extends State<AddressFormPage> {
                           ),
                           const SizedBox(height: 12),
 
-                          Row(
-                            children: _labelOptions.map((label) {
-                              final isSelected = _selectedLabel == label;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: GestureDetector(
-                                  onTap: () =>
-                                      setState(() => _selectedLabel = label),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 18,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? AppColors.darkBlue
-                                          : Colors.grey[100],
-                                      borderRadius: BorderRadius.circular(18),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? AppColors.darkBlue
-                                            : Colors.grey.shade300,
+                          ValueListenableBuilder<String>(
+                            valueListenable: _selectedLabelNotifier,
+                            builder: (context, selectedLabel, child) {
+                              return Row(
+                                children: _labelOptions.map((label) {
+                                  final isSelected = selectedLabel == label;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: GestureDetector(
+                                      onTap: () =>
+                                          _selectedLabelNotifier.value = label,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 18,
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? AppColors.darkBlue
+                                              : Colors.grey[100],
+                                          borderRadius: BorderRadius.circular(18),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? AppColors.darkBlue
+                                                : Colors.grey.shade300,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          label,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: isSelected
+                                                ? Colors.white
+                                                : AppColors.textDark,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    child: Text(
-                                      label,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : AppColors.textDark,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                  );
+                                }).toList(),
                               );
-                            }).toList(),
+                            },
                           ),
                           const SizedBox(height: 22),
-                          // 👇 SELIPKAN KEMBALI KODINGAN INI 👇
                           _buildLabel('NAMA LOKASI'),
                           const SizedBox(height: 10),
                           _buildTextField(
@@ -491,59 +512,64 @@ class _AddressFormPageState extends State<AddressFormPage> {
                             hint: 'Contoh: Kosan, Rumah Ortu',
                           ),
                           const SizedBox(height: 20),
-                          // 👆
                           _buildLabel('ATUR SEBAGAI'),
                           const SizedBox(height: 10),
-                          GestureDetector(
-                            onTap: () => setState(() => _isUtama = !_isUtama),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.grey.shade200),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      'Utama',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textDark,
-                                      ),
-                                    ),
+                          ValueListenableBuilder<bool>(
+                            valueListenable: _isUtamaNotifier,
+                            builder: (context, isUtama, child) {
+                              return GestureDetector(
+                                onTap: () =>
+                                    _isUtamaNotifier.value = !_isUtamaNotifier.value,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
                                   ),
-                                  Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: AppColors.darkBlue,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: _isUtama
-                                        ? Center(
-                                            child: Container(
-                                              width: 10,
-                                              height: 10,
-                                              decoration: const BoxDecoration(
-                                                color: AppColors.darkBlue,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                          )
-                                        : const SizedBox.shrink(),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: Colors.grey.shade200),
                                   ),
-                                ],
-                              ),
-                            ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          'Utama',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textDark,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        width: 20,
+                                        height: 20,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: AppColors.darkBlue,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: isUtama
+                                            ? Center(
+                                                child: Container(
+                                                  width: 10,
+                                                  height: 10,
+                                                  decoration: const BoxDecoration(
+                                                    color: AppColors.darkBlue,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                              )
+                                            : const SizedBox.shrink(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 20),
                           _buildLabel('ALAMAT LENGKAP'),
