@@ -25,12 +25,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
   final _chatService = ChatService();
+  late Future<List<ChatModel>> _chatFuture;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(() {
       setState(() => _searchQuery = _searchController.text.toLowerCase());
+    });
+    _loadData();
+  }
+
+  void _loadData() {
+    setState(() {
+      _chatFuture = _chatService.getDaftarChat();
     });
   }
 
@@ -108,13 +116,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           // Chat list
           Expanded(
             child: FutureBuilder<List<ChatModel>>(
-              future: _chatService.getDaftarChat(),
+              future: _chatFuture,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (snapshot.hasError) {
+                if (snapshot.hasError && !snapshot.hasData) {
                   return const Center(child: Text('Gagal memuat chat'));
                 }
 
@@ -140,7 +148,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                             builder: (_) => ChatDetailPage(chat: chat),
                           ),
                         ).then(
-                          (_) => setState(() {}),
+                          (_) {
+                            if (mounted) _loadData();
+                          },
                         ); // Refresh halaman saat kembali dari chat
                       },
                     );

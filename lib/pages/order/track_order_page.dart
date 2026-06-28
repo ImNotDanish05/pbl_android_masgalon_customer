@@ -27,7 +27,13 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
   @override
   void initState() {
     super.initState();
-    _orderDetailFuture = _orderService.getOrderDetail(widget.order.id);
+    _loadData();
+  }
+
+  void _loadData() {
+    setState(() {
+      _orderDetailFuture = _orderService.getOrderDetail(widget.order.id);
+    });
   }
 
   @override
@@ -70,13 +76,13 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
       body: FutureBuilder<Map<String, dynamic>>(
         future: _orderDetailFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) {
+          if (snapshot.hasError && !snapshot.hasData) {
             return Center(child: Text('Gagal memuat peta: ${snapshot.error}'));
           }
-          if (!snapshot.hasData || snapshot.data == null) {
+          if ((!snapshot.hasData || snapshot.data == null) && !snapshot.hasData) {
             return const Center(child: Text('Data tidak ditemukan'));
           }
 

@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
 import '../../services/payment/topup_service.dart'; // Pastikan path ini sesuai dengan struktur foldermu
 
-class TopUpStep1 extends StatelessWidget {
+class TopUpStep1 extends StatefulWidget {
   final VoidCallback onNext;
   final VoidCallback? onBack;
 
   const TopUpStep1({Key? key, required this.onNext, this.onBack}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    // Inisialisasi service untuk memanggil fungsi fetchQrisImage()
-    final topupService = TopupService();
+  State<TopUpStep1> createState() => _TopUpStep1State();
+}
 
+class _TopUpStep1State extends State<TopUpStep1> {
+  final _topupService = TopupService();
+  late Future<String?> _qrisFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _qrisFuture = _topupService.fetchQrisImage();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -26,10 +37,10 @@ class TopUpStep1 extends StatelessWidget {
             children: [
               // --- Bagian FutureBuilder Pengganti Dummy QR Code ---
               FutureBuilder<String?>(
-                future: topupService.fetchQrisImage(),
+                future: _qrisFuture,
                 builder: (context, snapshot) {
                   // Kondisi 1: Sedang Loading
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                     return Container(
                       height: 200,
                       width: 200,
@@ -43,7 +54,7 @@ class TopUpStep1 extends StatelessWidget {
                   }
 
                   // Kondisi 2: Error atau Data Kosong
-                  if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                  if ((snapshot.hasError || !snapshot.hasData || snapshot.data == null || snapshot.data!.isEmpty) && !snapshot.hasData) {
                     return Container(
                       height: 200,
                       width: 200,
@@ -134,7 +145,7 @@ class TopUpStep1 extends StatelessWidget {
         
         // --- Bagian Tombol (Tetap sama seperti aslimu) ---
         ElevatedButton.icon(
-          onPressed: onNext,
+          onPressed: widget.onNext,
           icon: const Icon(Icons.receipt_long),
           label: const Text('Sudah Bayar, Unggah Bukti'),
           style: ElevatedButton.styleFrom(
@@ -148,7 +159,7 @@ class TopUpStep1 extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+          onPressed: widget.onBack ?? () => Navigator.of(context).maybePop(),
           style: TextButton.styleFrom(
             foregroundColor: Colors.blue[800],
             padding: const EdgeInsets.symmetric(vertical: 16),

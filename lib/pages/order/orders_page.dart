@@ -66,7 +66,9 @@ class _OrdersPageState extends ConsumerState<OrdersPage> with RouteAware {
             SaldoCard(
               saldo: customer?.saldoAbunemen ?? 0,
               onTap: () {
-                context.push('/topup');
+                context.push('/topup').then((_) {
+                  if (mounted) _loadData();
+                });
               },
             ),
             const SizedBox(height: 24),
@@ -75,14 +77,16 @@ class _OrdersPageState extends ConsumerState<OrdersPage> with RouteAware {
               subtitle: 'Pantau pengiriman air Anda',
               actionText: 'Lihat Semua',
               onActionTap: () {
-                context.push('/orders/history');
+                context.push('/orders/history').then((_) {
+                  if (mounted) _loadData();
+                });
               },
             ),
             const SizedBox(height: 14),
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _ordersFuture,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.all(20.0),
@@ -91,7 +95,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage> with RouteAware {
                   );
                 }
 
-                if (snapshot.hasError) {
+                if (snapshot.hasError && !snapshot.hasData) {
                   return Center(
                     child: Text('Terjadi kesalahan: ${snapshot.error}'),
                   );

@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -463,21 +464,34 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   }
 }
 
-class _PreviewImage extends StatelessWidget {
+class _PreviewImage extends StatefulWidget {
   final XFile image;
 
   const _PreviewImage({required this.image});
 
   @override
+  State<_PreviewImage> createState() => _PreviewImageState();
+}
+
+class _PreviewImageState extends State<_PreviewImage> {
+  late Future<Uint8List> _bytesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytesFuture = widget.image.readAsBytes();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: image.readAsBytes(),
+    return FutureBuilder<Uint8List>(
+      future: _bytesFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (snapshot.hasError || !snapshot.hasData) {
+        if ((snapshot.hasError || !snapshot.hasData) && !snapshot.hasData) {
           return const Icon(
             Icons.broken_image,
             color: Colors.white54,

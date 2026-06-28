@@ -63,15 +63,15 @@ class _OrderDetailPageState extends State<OrderDetailPage> with RouteAware {
       body: FutureBuilder<Map<String, dynamic>>(
         future: _orderDetailFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) {
+          if (snapshot.hasError && !snapshot.hasData) {
             return Center(
               child: Text('Gagal memuat rincian: ${snapshot.error}'),
             );
           }
-          if (!snapshot.hasData || snapshot.data == null) {
+          if ((!snapshot.hasData || snapshot.data == null) && !snapshot.hasData) {
             return const Center(child: Text('Data pesanan tidak ditemukan.'));
           }
 

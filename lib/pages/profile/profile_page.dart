@@ -87,6 +87,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       _loadAlamat();
       _loadVoucher();
     });
+    Future.microtask(() {
+      ref.read(authCustomerProvider.notifier).refreshProfile();
+    });
   }
 
   void _handleKeluar() async {
@@ -174,9 +177,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         builder: (context) => const EditProfilePage(),
                       ),
                     ).then((_) {
-                      // Blok ini akan berjalan saat user kembali dari halaman edit profil.
-                      // Kamu bisa memanggil fungsi refresh data di sini jika diperlukan agar data terbaru langsung muncul.
-                      setState(() {});
+                      if (mounted) {
+                        ref.read(authCustomerProvider.notifier).refreshProfile();
+                        _loadAlamat();
+                        _loadVoucher();
+                      }
                     });
                   },
                 ),
@@ -192,7 +197,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             const SizedBox(height: 10),
             SaldoCard(
               saldo: customer?.saldoAbunemen ?? 0,
-              onTap: () => context.push('/topup'),
+              onTap: () {
+                context.push('/topup').then((_) {
+                  if (mounted) {
+                    ref.read(authCustomerProvider.notifier).refreshProfile();
+                    _loadAlamat();
+                    _loadVoucher();
+                  }
+                });
+              },
             ),
 
             const SizedBox(height: 20),

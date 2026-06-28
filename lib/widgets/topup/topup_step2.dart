@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Wajib di-import untuk input formatter
 import 'package:image_picker/image_picker.dart'; 
 
-class TopUpStep2 extends StatelessWidget {
+class TopUpStep2 extends StatefulWidget {
   final String nominal;
   final String keterangan;
   final XFile? buktiTransfer;
@@ -23,6 +23,35 @@ class TopUpStep2 extends StatelessWidget {
     required this.onSubmit,
   }) : super(key: key);
 
+  @override
+  State<TopUpStep2> createState() => _TopUpStep2State();
+}
+
+class _TopUpStep2State extends State<TopUpStep2> {
+  Future<Uint8List>? _bytesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initBytes();
+  }
+
+  @override
+  void didUpdateWidget(covariant TopUpStep2 oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.buktiTransfer != oldWidget.buktiTransfer) {
+      _initBytes();
+    }
+  }
+
+  void _initBytes() {
+    if (widget.buktiTransfer != null) {
+      _bytesFuture = widget.buktiTransfer!.readAsBytes();
+    } else {
+      _bytesFuture = null;
+    }
+  }
+
   // Fungsi async untuk membuka galeri dan memilih gambar
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -32,7 +61,7 @@ class TopUpStep2 extends StatelessWidget {
     );
 
     if (pickedFile != null) {
-      onBuktiSelected(pickedFile);
+      widget.onBuktiSelected(pickedFile);
     }
   }
 
@@ -81,7 +110,7 @@ class TopUpStep2 extends StatelessWidget {
           onTap: _pickImage, 
           child: Container(
             width: double.infinity,
-            padding: buktiTransfer != null 
+            padding: widget.buktiTransfer != null 
                 ? EdgeInsets.zero 
                 : const EdgeInsets.symmetric(vertical: 40),
             decoration: BoxDecoration(
@@ -89,22 +118,28 @@ class TopUpStep2 extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               color: Colors.white,
             ),
-            child: buktiTransfer != null
+            child: widget.buktiTransfer != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(11), 
                     child: FutureBuilder<Uint8List>(
-                      future: buktiTransfer!.readAsBytes(),
+                      future: _bytesFuture,
                       builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (snapshot.hasError && !snapshot.hasData) {
+                          return Center(
+                            child: Text('Error loading image: ${snapshot.error}'),
+                          );
+                        }
                         if (snapshot.hasData) {
                           return Image.memory(
                             snapshot.data!,
                             height: 200,
                             width: double.infinity,
                             fit: BoxFit.cover, 
-                          );
-                        } else if (snapshot.hasError) {
-                          return Center(
-                            child: Text('Error loading image: ${snapshot.error}'),
                           );
                         } else {
                           return const Center(
@@ -143,7 +178,7 @@ class TopUpStep2 extends StatelessWidget {
             FilteringTextInputFormatter.digitsOnly, // Memblokir spasi, koma, huruf, dll
             ThousandsSeparatorInputFormatter(),     // Format titik otomatis (class ada di bawah)
           ],
-          onChanged: onNominalChanged,
+          onChanged: widget.onNominalChanged,
           decoration: InputDecoration(
             prefixText: 'Rp ', // Tulisan otomatis di depan
             prefixStyle: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
@@ -159,7 +194,7 @@ class TopUpStep2 extends StatelessWidget {
         const SizedBox(height: 8),
         TextField(
           maxLines: 3,
-          onChanged: onKeteranganChanged,
+          onChanged: widget.onKeteranganChanged,
           decoration: InputDecoration(
             hintText: 'Tambahkan catatan untuk admin...',
             filled: true,
@@ -172,7 +207,7 @@ class TopUpStep2 extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: onSubmit,
+            onPressed: widget.onSubmit,
             icon: const Icon(Icons.send),
             label: const Text('Kirim Bukti'),
             style: ElevatedButton.styleFrom(

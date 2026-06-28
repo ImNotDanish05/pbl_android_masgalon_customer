@@ -78,12 +78,12 @@ class _HistoryOrderPageState extends ConsumerState<HistoryOrderPage> with RouteA
               future: _ordersFuture,
               builder: (context, snapshot) {
                 // Tampilan saat loading
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
                 // Tampilan saat error
-                if (snapshot.hasError) {
+                if (snapshot.hasError && !snapshot.hasData) {
                   return Center(
                     child: Text('Gagal memuat pesanan: ${snapshot.error}'),
                   );

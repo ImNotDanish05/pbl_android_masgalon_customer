@@ -113,6 +113,40 @@ class AuthCustomerNotifier extends StateNotifier<AuthCustomer?> {
       state = null;
     }
   }
+
+  // Refresh data dari DB tanpa logout
+  Future<void> refreshProfile() async {
+    if (state == null) return;
+    try {
+      final supabase = Supabase.instance.client;
+      
+      // Fetch data terbaru
+      final userData = await supabase
+          .from('users')
+          .select('avatar_url')
+          .eq('id', state!.id)
+          .single();
+
+      final customerData = await supabase
+          .from('customers')
+          .select('username, saldo_abunemen')
+          .eq('user_id', state!.id)
+          .single();
+
+      // Update state tanpa logout
+      state = state!.copyWith(
+        username: customerData['username'] as String,
+        avatarUrl: userData['avatar_url'] as String?,
+        saldoAbunemen: customerData['saldo_abunemen'] != null
+            ? int.tryParse(customerData['saldo_abunemen'].toString()) ?? 0
+            : 0,
+      );
+      debugPrint('✅ Profile refreshed: ${state!.username}');
+    } catch (e) {
+      debugPrint('⚠️ Gagal refresh profile: $e');
+      // Jangan logout, biarkan data lama tetap tampil
+    }
+  }
 }
 
 // Provider utama — null berarti belum login

@@ -33,6 +33,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       _printCurrentUser();
       _loadDataKatalog();
     });
+    Future.microtask(() {
+      ref.read(authCustomerProvider.notifier).refreshProfile();
+    });
   }
 
   Future<void> _loadDataKatalog() async {
@@ -121,7 +124,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                 const SizedBox(height: 16),
                 SaldoCard(
                   saldo: customer?.saldoAbunemen ?? 0,
-                  onTap: () => context.push('/topup'),
+                  onTap: () {
+                    context.push('/topup').then((_) {
+                      if (mounted) {
+                        ref.read(authCustomerProvider.notifier).refreshProfile();
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(height: 48),
                 ProductSection(products: daftarGalonAsli),
