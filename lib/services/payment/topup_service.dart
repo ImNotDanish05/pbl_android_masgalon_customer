@@ -36,7 +36,14 @@ class TopupService {
           .limit(1)
           .single(); // Pakai single() karena datanya cuma 1 baris
 
-      return response['qris_image'] as String?;
+      final String? path = response['qris_image'] as String?;
+      if (path == null || path.isEmpty) return null;
+
+      if (path.startsWith('http')) {
+        return path;
+      }
+
+      return _supabase.storage.from('qris_bucket').getPublicUrl(path);
     } catch (e) {
       throw Exception('Gagal mengambil data QRIS: $e');
     }
