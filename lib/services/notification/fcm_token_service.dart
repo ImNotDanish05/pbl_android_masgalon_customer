@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ─────────────────────────────────────────────────────────────
@@ -46,5 +47,3 @@ class FcmTokenService {
   }
 }
 
-// ignore: avoid_print
-void debugPrint(String message) => print(message);

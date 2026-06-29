@@ -71,62 +71,90 @@ class NotificationService {
 
     // 5. Handle foreground message → tampilkan local notification
     FirebaseMessaging.onMessage.listen((message) {
+      debugPrint('[FCM-Customer] Menerima pesan foreground: ${message.notification?.title}');
       _showLocalNotification(message);
     });
 
     // 6. Handle tap notifikasi saat app di background (tapi tidak terminated)
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      debugPrint('[FCM-Customer] Aplikasi dibuka dari notifikasi background');
       _handleRemoteMessageTap(message, navigatorKey);
     });
 
     // 7. Handle tap notifikasi saat app terminated
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
+      debugPrint('[FCM-Customer] Aplikasi diluncurkan dari notifikasi terminated');
       // Delay singkat agar Navigator sudah siap
       await Future.delayed(const Duration(milliseconds: 500));
       _handleRemoteMessageTap(initialMessage, navigatorKey);
     }
 
-    debugPrint('[FCM] NotificationService initialized.');
+    debugPrint('[FCM-Customer] NotificationService initialized.');
   }
 
   // ── Ambil token FCM perangkat ini ───────────────────────────
   static Future<String?> getToken() async {
     try {
+      await requestPermission();
       final token = await _messaging.getToken();
-      debugPrint('[FCM] Token: ${token?.substring(0, 20)}...');
+      debugPrint('[FCM-Customer] Token: ${token?.substring(0, 20)}...');
       return token;
     } catch (e) {
-      debugPrint('[FCM] Gagal ambil token: $e');
+      debugPrint('[FCM-Customer] Gagal ambil token: $e');
       return null;
+    }
+  }
+
+  // ── Minta izin notifikasi ────────────────────────────────────
+  static Future<void> requestPermission() async {
+    try {
+      if (Platform.isAndroid || Platform.isIOS) {
+        await _messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
+    } catch (e) {
+      debugPrint('[FCM-Customer] Gagal meminta izin notifikasi: $e');
     }
   }
 
   // ── Tampilkan local notification (saat foreground) ──────────
   static Future<void> _showLocalNotification(RemoteMessage message) async {
-    final notification = message.notification;
-    if (notification == null) return;
+    try {
+      final notification = message.notification;
+      if (notification == null) {
+        debugPrint('[FCM-Customer] Tidak menampilkan local notification: payload notification kosong.');
+        return;
+      }
 
-    final payload = message.data.entries
-        .map((e) => '${e.key}=${e.value}')
-        .join('&');
+      final payload = message.data.entries
+          .map((e) => '${e.key}=${e.value}')
+          .join('&');
 
-    await _localNotif.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          _androidChannel.id,
-          _androidChannel.name,
-          channelDescription: _androidChannel.description,
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
+      debugPrint('[FCM-Customer] Menampilkan local notification: ${notification.title}');
+      await _localNotif.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            _androidChannel.id,
+            _androidChannel.name,
+            channelDescription: _androidChannel.description,
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
         ),
-      ),
-      payload: payload,
-    );
+        payload: payload,
+      );
+      debugPrint('[FCM-Customer] Local notification berhasil ditampilkan.');
+    } catch (e) {
+      debugPrint('[FCM-Customer] Exception saat menampilkan local notification: $e');
+    }
   }
 
   // ── Handle tap dari local notification ──────────────────────
@@ -149,16 +177,16 @@ class NotificationService {
 
   // ── Routing berdasarkan data payload ────────────────────────
   static void _navigate(
-    Map<String, String> data,
+    Map<String, dynamic> data,
     GlobalKey<NavigatorState> navigatorKey,
   ) {
     final context = navigatorKey.currentContext;
     if (context == null) return;
 
-    final type = data['type'];
+    final type = data['type']?.toString();
 
     if (type == 'order') {
-      final orderId = data['order_id'];
+      final orderId = data['order_id']?.toString();
       if (orderId != null) {
         Navigator.of(context).pushNamed('/order-detail', arguments: orderId);
       }

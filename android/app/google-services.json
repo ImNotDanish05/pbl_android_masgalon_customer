@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "24541519784",
+    "project_id": "masgalon-8d72a",
+    "storage_bucket": "masgalon-8d72a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:24541519784:android:f2c91c7d31fae331b4879d",
+        "android_client_info": {
+          "package_name": "com.example.pbl_android_masgalon_customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5drAyTB6R3dTNAjGQ3Fb_8eCvFxApv38"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
