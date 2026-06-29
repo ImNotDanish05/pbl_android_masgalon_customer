@@ -4,8 +4,14 @@ import '../../core/constants/app_colors.dart';
 class SaldoCard extends StatelessWidget {
   final int saldo;
   final VoidCallback? onTap;
+  final VoidCallback? onHistoryTap;
 
-  const SaldoCard({super.key, required this.saldo, this.onTap});
+  const SaldoCard({
+    super.key,
+    required this.saldo,
+    this.onTap,
+    this.onHistoryTap,
+  });
 
   String _formatRupiah(int value) {
     final str = value.toString();
@@ -48,37 +54,74 @@ class SaldoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(20),
-              splashColor: Colors.white24,
-              hoverColor: Colors.white10,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+          Row(
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.4)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_circle_outline, color: Colors.white, size: 16),
-                    SizedBox(width: 6),
-                    Text(
-                      'Isi Saldo',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  splashColor: Colors.white24,
+                  hoverColor: Colors.white10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.4)),
                     ),
-                  ],
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_circle_outline, color: Colors.white, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'Isi Saldo',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onHistoryTap,
+                  borderRadius: BorderRadius.circular(20),
+                  splashColor: Colors.white24,
+                  hoverColor: Colors.white10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.history, color: Colors.white, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'Riwayat',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

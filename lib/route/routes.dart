@@ -23,6 +23,7 @@ import '../pages/order/track_order_page.dart';
 import '../pages/profile/profile_page.dart';
 import '../pages/profile/address_form_page.dart';
 import '../pages/topup/topup_page.dart';
+import '../pages/topup/topup_history_page.dart';
 import '../pages/order/voucher_page.dart';
 import '../pages/chat/chat_page.dart';
 import '../services/supabase_client.dart';
@@ -134,6 +135,11 @@ class AppRouter {
         path: '/topup',
         name: 'topup',
         builder: (context, state) => const TopUpPage(),
+      ),
+      GoRoute(
+        path: '/topup/history',
+        name: 'topup-history',
+        builder: (context, state) => const TopUpHistoryPage(),
       ),
       GoRoute(
         path: '/voucher',

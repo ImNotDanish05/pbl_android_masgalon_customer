@@ -70,6 +70,11 @@ class _OrdersPageState extends ConsumerState<OrdersPage> with RouteAware {
                   if (mounted) _loadData();
                 });
               },
+              onHistoryTap: () {
+                context.push('/topup/history').then((_) {
+                  if (mounted) _loadData();
+                });
+              },
             ),
             const SizedBox(height: 24),
             SectionHeader(

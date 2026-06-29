@@ -206,6 +206,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   }
                 });
               },
+              onHistoryTap: () {
+                context.push('/topup/history').then((_) {
+                  if (mounted) {
+                    ref.read(authCustomerProvider.notifier).refreshProfile();
+                    _loadAlamat();
+                    _loadVoucher();
+                  }
+                });
+              },
             ),
 
             const SizedBox(height: 20),

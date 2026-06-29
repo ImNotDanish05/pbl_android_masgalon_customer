@@ -2,7 +2,7 @@ class TopupRequest {
   final String? id;
   final String customerId;
   final int nominal;
-  final String buktiTransferUrl;
+  final String? buktiTransferUrl;
   final bool isVerified;
   final DateTime? createdAt;
 
@@ -10,7 +10,7 @@ class TopupRequest {
     this.id,
     required this.customerId,
     required this.nominal,
-    required this.buktiTransferUrl,
+    this.buktiTransferUrl,
     this.isVerified = false,
     this.createdAt,
   });
@@ -29,11 +29,13 @@ class TopupRequest {
 
   // Mengubah Object Dart menjadi JSON (untuk insert ke Supabase)
   Map<String, dynamic> toJson() {
-    return {
+    final data = <String, dynamic>{
       'customer_id': customerId,
       'nominal': nominal,
-      'bukti_transfer_url': buktiTransferUrl,
-      // id, is_verified, dan created_at tidak dikirim agar Supabase yang mengisinya otomatis
     };
+    if (buktiTransferUrl != null) {
+      data['bukti_transfer_url'] = buktiTransferUrl;
+    }
+    return data;
   }
 }

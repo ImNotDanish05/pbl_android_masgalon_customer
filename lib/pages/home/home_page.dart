@@ -118,6 +118,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                       }
                     });
                   },
+                  onHistoryTap: () {
+                    context.push('/topup/history').then((_) {
+                      if (mounted) {
+                        ref.read(authCustomerProvider.notifier).refreshProfile();
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(height: 48),
                 ProductSection(products: daftarGalonAsli),
