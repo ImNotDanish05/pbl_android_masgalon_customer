@@ -150,14 +150,7 @@ class PaymentSuccessPage extends StatelessWidget {
               child: Column(
                 children: [
                   CustomButton(
-                    text: 'Lacak Pesanan',
-                    icon: Icons.local_shipping_outlined,
-                    onPressed: () => context.pushNamed('track-order'),
-                  ),
-                  const SizedBox(height: 12),
-                  CustomButton(
                     text: 'Kembali ke Beranda',
-                    isOutlined: true,
                     onPressed: () => context.goNamed('home'),
                   ),
                 ],
