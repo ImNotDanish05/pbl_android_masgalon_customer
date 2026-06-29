@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 class ProductModel {
   final String id;
   final String brand;
@@ -18,6 +20,9 @@ class ProductModel {
     this.badge,
     this.subtitle,
   });
+
+  static const _imageBucket = 'product-images';
+
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     // 1. Ambil kolom 'nama' dari database (bukan 'name')
     final namaProduk = json['nama'] ?? 'Produk Tanpa Nama';
@@ -45,10 +50,22 @@ class ProductModel {
 
       // Karena di database kamu tidak ada kolom gambar dan kategori, kita pakai logika lokal di atas
       imageAsset: imageAssetDefault,
-      imageUrl: json['image_url'],
+      imageUrl: _resolveProductImageUrl(json['image_url']?.toString()),
       brand: namaProduk.toLowerCase().contains('gas') ? 'Gas' : 'Air Minum',
       badge: namaProduk.toLowerCase().contains('3kg') ? 'TERLARIS' : null,
       subtitle: subtitleDefault,
+    );
+  }
+
+  static String? _resolveProductImageUrl(String? rawValue) {
+    final value = rawValue?.trim();
+    if (value == null || value.isEmpty) return null;
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+
+    return Supabase.instance.client.storage.from(_imageBucket).getPublicUrl(
+      value,
     );
   }
 }

@@ -17,11 +17,16 @@ class TopupRequest {
 
   // Mengubah JSON dari Supabase menjadi Object Dart (untuk read data)
   factory TopupRequest.fromJson(Map<String, dynamic> json) {
+    String? url = json['bukti_transfer_url'];
+    if (url != null && url.startsWith('http')) {
+      final prefix = url.startsWith('https://') ? 'https://' : 'http://';
+      url = prefix + url.substring(prefix.length).replaceAll('//', '/');
+    }
     return TopupRequest(
       id: json['id'],
       customerId: json['customer_id'],
       nominal: json['nominal'],
-      buktiTransferUrl: json['bukti_transfer_url'],
+      buktiTransferUrl: url,
       isVerified: json['is_verified'] ?? false,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
     );

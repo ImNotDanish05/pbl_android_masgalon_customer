@@ -1,12 +1,10 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
-import 'package:image_picker/image_picker.dart';
-import '../../core/constants/app_colors.dart';
 import '../../models/chat_model.dart';
-import '../../services/chat_service.dart';
 import '../../services/chat_service.dart';
 import '../../widgets/shared/custom_app_bar.dart';
 import '../../widgets/chat/message_bubble.dart';
@@ -21,15 +19,59 @@ class ChatDetailPage extends StatefulWidget {
   State<ChatDetailPage> createState() => _ChatDetailPageState();
 }
 
-class _ChatDetailPageState extends State<ChatDetailPage> {
+class _ChatDetailPageState extends State<ChatDetailPage>
+    with WidgetsBindingObserver {
   final _scrollController = ScrollController();
   final _chatService = ChatService();
   bool _isUploadingImage = false;
 
+  List<MessageModel> _messages = [];
+  bool _isFirstLoad = true;
+  StreamSubscription<List<MessageModel>>? _chatSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _subscribeToChat();
+  }
+
+  void _subscribeToChat() {
+    _chatSubscription?.cancel();
+    _chatSubscription = _chatService
+        .getChatStream(widget.chat.id)
+        .listen(
+          (messages) {
+            if (mounted) {
+              setState(() {
+                _messages = messages;
+                _isFirstLoad = false;
+              });
+            }
+          },
+          onError: (e) {
+            if (mounted) {
+              setState(() {
+                _isFirstLoad = false;
+              });
+            }
+          },
+        );
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _chatSubscription?.cancel();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _subscribeToChat();
+    }
   }
 
   void _scrollToBottom() {
@@ -190,6 +232,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Auto-scroll saat ada pesan baru masuk
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: CustomAppBar(
@@ -221,77 +266,59 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<List<MessageModel>>(
-              // Dengarkan perubahan data berdasarkan order_id
-              stream: _chatService.getChatStream(widget.chat.id),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            child: _isFirstLoad
+                ? const Center(child: CircularProgressIndicator())
+                : _messages.isEmpty
+                    ? const Center(
+                        child: Text('Belum ada pesan. Sapa kurirmu!'),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        itemCount: _messages.length,
+                        itemBuilder: (_, index) {
+                          final message = _messages[index];
+                          final prevMessage =
+                              index > 0 ? _messages[index - 1] : null;
+                          final showTime =
+                              prevMessage == null ||
+                              _formatTime(prevMessage.time) !=
+                                  _formatTime(message.time);
 
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                final messages = snapshot.data ?? [];
-
-                // Auto-scroll saat ada pesan baru masuk
-                WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => _scrollToBottom(),
-                );
-
-                if (messages.isEmpty) {
-                  return const Center(
-                    child: Text('Belum ada pesan. Sapa kurirmu!'),
-                  );
-                }
-
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  itemCount: messages.length,
-                  itemBuilder: (_, index) {
-                    final message = messages[index];
-                    final prevMessage = index > 0 ? messages[index - 1] : null;
-                    final showTime =
-                        prevMessage == null ||
-                        _formatTime(prevMessage.time) !=
-                            _formatTime(message.time);
-
-                    return Column(
-                      children: [
-                        if (showTime && !message.isFromMe)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text(
-                              _formatTime(message.time), // 👈 Format waktu
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey[400],
-                              ),
-                            ),
-                          ),
-                        MessageBubble(message: message),
-                        if (showTime && message.isFromMe)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text(
-                              _formatTime(message.time), // 👈 Format waktu
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey[400],
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
+                          return Column(
+                            children: [
+                              if (showTime && !message.isFromMe)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                  child: Text(
+                                    _formatTime(message.time), // 👈 Format waktu
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ),
+                              MessageBubble(message: message),
+                              if (showTime && message.isFromMe)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                  child: Text(
+                                    _formatTime(message.time), // 👈 Format waktu
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
           ),
 
           ChatInputBar(onSend: _handleSend, onAttach: _showImagePickerOptions),
@@ -487,7 +514,8 @@ class _PreviewImageState extends State<_PreviewImage> {
     return FutureBuilder<Uint8List>(
       future: _bytesFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 

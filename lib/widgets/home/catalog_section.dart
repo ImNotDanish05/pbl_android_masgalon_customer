@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/product_model.dart';
@@ -65,7 +66,6 @@ class _GalonCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product image placeholder
           Container(
             width: double.infinity,
             height: 120,
@@ -73,11 +73,31 @@ class _GalonCard extends StatelessWidget {
               color: const Color(0xFFEAF3FF),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.water_drop_outlined,
-              size: 48,
-              color: Color(0xFF90CAF9),
-            ),
+            child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: CachedNetworkImage(
+                      imageUrl: product.imageUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => const Icon(
+                        Icons.broken_image_outlined,
+                        size: 40,
+                        color: Color(0xFF90CAF9),
+                      ),
+                    ),
+                  )
+                : const Icon(
+                    Icons.water_drop_outlined,
+                    size: 48,
+                    color: Color(0xFF90CAF9),
+                  ),
           ),
           const SizedBox(height: 10),
           Text(
