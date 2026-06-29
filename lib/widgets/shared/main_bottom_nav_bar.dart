@@ -46,13 +46,6 @@ class MainBottomNavBar extends StatelessWidget {
                 isActive: currentIndex == 2,
                 onTap: () => onTap(2),
               ),
-              _NavItem(
-                icon: Icons.chat_bubble_outline,
-                activeIcon: Icons.chat_bubble,
-                label: 'Chat',
-                isActive: currentIndex == 3,
-                onTap: () => onTap(3),
-              ),
             ],
           ),
         ),

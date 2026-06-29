@@ -144,8 +144,6 @@ class _OrdersPageState extends ConsumerState<OrdersPage> with RouteAware {
             context.go('/home');
           } else if (i == 2) {
             context.go('/profile');
-          } else if (i == 3) {
-            context.go('/chat');
           }
           setState(() => _currentNavIndex = i);
         },

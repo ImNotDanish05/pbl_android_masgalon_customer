@@ -252,8 +252,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             context.go('/profile');
           } else if (index == 1) {
             context.go('/orders');
-          } else if (index == 3) {
-            context.go('/chat');
           }
           setState(() => _currentNavIndex = index);
         },

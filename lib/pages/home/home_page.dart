@@ -211,8 +211,6 @@ class _HomePageState extends ConsumerState<HomePage> {
             context.go('/orders');
           } else if (index == 2) {
             context.go('/profile');
-          } else if (index == 3) {
-            context.go('/chat');
           }
           setState(() => _currentNavIndex = index);
         },
