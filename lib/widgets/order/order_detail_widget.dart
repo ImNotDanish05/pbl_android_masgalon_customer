@@ -564,3 +564,63 @@ class DashedDivider extends StatelessWidget {
     );
   }
 }
+
+// ==========================================
+// 7. BuktiPengirimanCard
+// ==========================================
+class BuktiPengirimanCard extends StatelessWidget {
+  final Map<String, dynamic> detailData;
+  const BuktiPengirimanCard({super.key, required this.detailData});
+
+  @override
+  Widget build(BuildContext context) {
+    final buktiUrl = detailData['bukti_pengiriman_url']?.toString();
+
+    if (buktiUrl == null || buktiUrl.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'BUKTI FOTO PENGIRIMAN',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 10,
+              color: AppColors.textGrey,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              buktiUrl,
+              width: double.infinity,
+              height: 200,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: double.infinity,
+                height: 200,
+                color: Colors.grey.shade100,
+                child: const Center(
+                  child: Text('Gagal memuat bukti foto.'),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

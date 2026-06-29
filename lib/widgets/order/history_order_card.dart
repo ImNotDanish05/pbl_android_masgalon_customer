@@ -94,27 +94,26 @@ class HistoryOrderCard extends StatelessWidget {
                 ),
               ),
 
-              // 👇 3. LOGIKA TOMBOL BERDASARKAN STATUS
-              if (isAktif)
-                Row(
-                  children: [
-                    // Tombol Detail (Selalu bisa diklik)
-                    Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: AppColors.lightBlue,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: IconButton(
-                        onPressed: () => context.push('/orders/detail', extra: order),
-                        icon: const Icon(
-                          Icons.receipt_long_outlined,
-                          color: AppColors.primaryBlue,
-                          size: 20,
-                        ),
-                        tooltip: "Detail Pesanan",
-                      ),
+              Row(
+                children: [
+                  // Tombol Detail (Selalu tampil untuk semua status)
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.lightBlue,
+                      borderRadius: BorderRadius.circular(14),
                     ),
+                    child: IconButton(
+                      onPressed: () => context.push('/orders/detail', extra: order),
+                      icon: const Icon(
+                        Icons.receipt_long_outlined,
+                        color: AppColors.primaryBlue,
+                        size: 20,
+                      ),
+                      tooltip: "Detail Pesanan",
+                    ),
+                  ),
+                  if (isAktif) ...[
                     // Tombol Chat (Mati kalau kurir belum ada / masih menunggu)
                     Container(
                       margin: const EdgeInsets.only(right: 8),
@@ -182,28 +181,30 @@ class HistoryOrderCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                  ] else ...[
+                    // Jika statusnya SELESAI / DIBATALKAN (Tampilkan Pesan Lagi)
+                    ElevatedButton(
+                      onPressed: () => context.push('/confirm-order'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        'Pesan Lagi',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ],
-                )
-              else
-                // Jika statusnya SELESAI / DIBATALKAN (Tampilkan Pesan Lagi)
-                ElevatedButton(
-                  onPressed: () => context.push('/confirm-order'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    'Pesan Lagi',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+                ],
+              ),
             ],
           ),
         ],

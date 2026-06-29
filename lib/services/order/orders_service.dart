@@ -1,8 +1,11 @@
 // lib/services/order_service.dart
 import 'dart:async';
+import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 
 class OrderService {
   final _supabase = Supabase.instance.client;
@@ -255,5 +258,34 @@ class OrderService {
     ).subscribe();
 
     return controller.stream;
+  }
+
+  /// Get detailed road route points using OSRM Route API
+  Future<List<LatLng>> getOSRMRoute(LatLng start, LatLng end) async {
+    final baseUrl = dotenv.env['OSRM_BASE_URL'] ?? 'https://router.project-osrm.org';
+    final url = Uri.parse('$baseUrl/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full&geometries=geojson');
+
+    try {
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['code'] == 'Ok' && data['routes'] != null && data['routes'].isNotEmpty) {
+          final route = data['routes'][0];
+          final List<LatLng> points = [];
+          if (route['geometry'] != null && route['geometry']['coordinates'] != null) {
+            final List<dynamic> coordsList = route['geometry']['coordinates'];
+            for (final coord in coordsList) {
+              final lng = double.tryParse(coord[0].toString()) ?? 0.0;
+              final lat = double.tryParse(coord[1].toString()) ?? 0.0;
+              points.add(LatLng(lat, lng));
+            }
+          }
+          return points;
+        }
+      }
+    } catch (e) {
+      debugPrint('OSRM Customer Route Error: $e');
+    }
+    return [start, end]; // Fallback to straight line
   }
 }

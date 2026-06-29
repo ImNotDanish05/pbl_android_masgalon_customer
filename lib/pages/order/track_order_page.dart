@@ -23,9 +23,13 @@ class TrackOrderPage extends StatefulWidget {
 
 class _TrackOrderPageState extends State<TrackOrderPage> {
   final _orderService = OrderService();
+  final _mapController = MapController();
   late Stream<Map<String, dynamic>> _orderDetailStream;
   LatLng? _courierLocation;
+  LatLng? _targetLocation;
+  List<LatLng> _routePoints = [];
   StreamSubscription<LatLng>? _courierLocationSubscription;
+  Timer? _pollingTimer;
 
   @override
   void initState() {
@@ -34,13 +38,24 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
     _setupLocationTracking();
   }
 
-  void _setupLocationTracking() {
+  void _setupLocationTracking() async {
+    // Ambil data alamat tujuan terlebih dahulu dari database
+    try {
+      final detailData = await _orderService.getOrderDetail(widget.order.id);
+      final lat =
+          (detailData['address_lat'] as num?)?.toDouble() ?? -7.0493;
+      final lng =
+          (detailData['address_long'] as num?)?.toDouble() ?? 110.4208;
+      _targetLocation = LatLng(lat, lng);
+    } catch (_) {}
+
     // 1. Ambil lokasi terakhir dari tracking_logs (jika sudah ada)
     _orderService.fetchLatestCourierLocation(widget.order.id).then((loc) {
       if (loc != null && mounted) {
         setState(() {
           _courierLocation = loc;
         });
+        _updateRoute();
       }
     });
 
@@ -52,13 +67,58 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
         setState(() {
           _courierLocation = loc;
         });
+        _updateRoute();
+      }
+    });
+
+    // 3. Fallback Polling (Setiap 5 detik sekali melakukan query ke DB jika Realtime Supabase delay/putus koneksi)
+    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (mounted) {
+        _orderService.fetchLatestCourierLocation(widget.order.id).then((loc) {
+          if (loc != null && mounted && loc != _courierLocation) {
+            setState(() {
+              _courierLocation = loc;
+            });
+            _updateRoute();
+          }
+        });
       }
     });
   }
 
+  void _updateRoute() async {
+    if (_courierLocation != null && _targetLocation != null) {
+      final points =
+          await _orderService.getOSRMRoute(_courierLocation!, _targetLocation!);
+      if (mounted) {
+        setState(() {
+          _routePoints = points;
+        });
+      }
+    }
+  }
+
+  void _refocusMap(LatLng courierLoc, LatLng targetLoc) {
+    try {
+      final bounds = LatLngBounds(courierLoc, targetLoc);
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.symmetric(horizontal: 70.0, vertical: 150.0),
+        ),
+      );
+    } catch (e) {
+      final centerLat = (courierLoc.latitude + targetLoc.latitude) / 2;
+      final centerLng = (courierLoc.longitude + targetLoc.longitude) / 2;
+      _mapController.move(LatLng(centerLat, centerLng), 14.5);
+    }
+  }
+
   @override
   void dispose() {
+    _pollingTimer?.cancel();
     _courierLocationSubscription?.cancel();
+    _mapController.dispose();
     super.dispose();
   }
   @override
@@ -127,6 +187,7 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
             children: [
               // LAPISAN BAWAH: Peta OpenStreetMap
               FlutterMap(
+                mapController: _mapController,
                 options: MapOptions(
                   initialCenter: targetLocation, // Peta otomatis fokus ke alamat
                   initialZoom: 16.0,
@@ -141,7 +202,9 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
                     PolylineLayer(
                       polylines: [
                         Polyline(
-                          points: [_courierLocation!, targetLocation],
+                          points: _routePoints.isNotEmpty
+                              ? _routePoints
+                              : [_courierLocation!, targetLocation],
                           color: AppColors.primaryBlue.withOpacity(0.8),
                           strokeWidth: 4.0,
                         ),
@@ -212,6 +275,23 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
                 child: DriverInfoSheet(
                     detailData: detailData, order: widget.order),
               ),
+
+              // Tombol Refokus Peta (Hanya muncul jika _courierLocation != null)
+              if (_courierLocation != null)
+                Positioned(
+                  right: 16,
+                  bottom: 260, // Di atas DriverInfoSheet agar tidak terhalang
+                  child: FloatingActionButton(
+                    heroTag: 'refocus_camera_button',
+                    mini: true,
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primaryBlue,
+                    onPressed: () {
+                      _refocusMap(_courierLocation!, targetLocation);
+                    },
+                    child: const Icon(Icons.my_location),
+                  ),
+                ),
             ],
           );
         },

@@ -114,6 +114,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> with RouteAware {
                 StatusPesananCard(detailData: detailData),
                 const SizedBox(height: 16),
                 KurirCard(detailData: detailData),
+                BuktiPengirimanCard(detailData: detailData),
                 const SizedBox(height: 24),
                 const SectionHeader(
                   icon: Icons.location_on,
