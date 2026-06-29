@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
-import '../../providers/auth_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-// ─────────────────────────────────────────────────────────────
-// NotificationPage — Customer App
-//
-// Menampilkan daftar notifikasi in-app dari tabel `notifications`.
-// Notifikasi otomatis ter-mark sebagai read saat halaman dibuka.
-// ─────────────────────────────────────────────────────────────
+import '../../providers/auth_provider.dart';
 
 class NotificationPage extends ConsumerStatefulWidget {
   const NotificationPage({super.key});
@@ -22,259 +16,427 @@ class NotificationPage extends ConsumerStatefulWidget {
 class _NotificationPageState extends ConsumerState<NotificationPage> {
   final _supabase = Supabase.instance.client;
 
-  late Future<List<Map<String, dynamic>>> _notifFuture;
+  bool _isLoading = true;
+  String? _errorMessage;
+  String _activeFilter = 'semua';
+  List<Map<String, dynamic>> _notifications = [];
 
   @override
   void initState() {
     super.initState();
-    _notifFuture = _loadNotifications();
+    _loadNotifications();
   }
 
-  Future<List<Map<String, dynamic>>> _loadNotifications() async {
+  Future<void> _loadNotifications() async {
     final user = ref.read(authCustomerProvider);
-    if (user == null) return [];
+    if (user == null) {
+      setState(() {
+        _notifications = [];
+        _isLoading = false;
+        _errorMessage = null;
+      });
+      return;
+    }
 
-    final data = await _supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', ascending: false)
-        .limit(50);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    // Mark semua sebagai read di background
-    _markAllAsRead(user.id);
+    try {
+      final data = await _supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', ascending: false)
+          .limit(50);
 
-    return List<Map<String, dynamic>>.from(data);
+      if (!mounted) return;
+
+      setState(() {
+        _notifications = List<Map<String, dynamic>>.from(data);
+        _isLoading = false;
+      });
+
+      await _markAllAsRead(user.id, updateLocalState: true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat notifikasi';
+      });
+    }
   }
 
-  Future<void> _markAllAsRead(String userId) async {
+  Future<void> _markAllAsRead(
+    String userId, {
+    bool updateLocalState = false,
+  }) async {
     try {
       await _supabase
           .from('notifications')
           .update({'is_read': true})
           .eq('user_id', userId)
           .eq('is_read', false);
+
+      if (!mounted || !updateLocalState) return;
+      setState(() {
+        _notifications = _notifications
+            .map((item) => {...item, 'is_read': true})
+            .toList();
+      });
     } catch (_) {
-      // Silent — tidak perlu crash kalau mark read gagal
+      // Keep the page usable even if the read-sync fails.
     }
   }
 
-  void _refresh() {
+  Future<void> _markCurrentUserNotificationsAsRead() async {
+    final user = ref.read(authCustomerProvider);
+    if (user == null) return;
+    await _markAllAsRead(user.id, updateLocalState: true);
+  }
+
+  Future<void> _deleteNotification(String id) async {
+    final previous = List<Map<String, dynamic>>.from(_notifications);
+
     setState(() {
-      _notifFuture = _loadNotifications();
+      _notifications.removeWhere((item) => item['id'].toString() == id);
     });
+
+    try {
+      await _supabase.from('notifications').delete().eq('id', id);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _notifications = previous;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal menghapus notifikasi')),
+      );
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredNotifications {
+    if (_activeFilter == 'semua') return _notifications;
+
+    return _notifications.where((item) {
+      final category = item['category']?.toString() ?? 'order';
+      return category == _activeFilter;
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final unreadCount =
+        _notifications.where((item) => item['is_read'] != true).length;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D52A1),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF0D52A1)),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           'Notifikasi',
           style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+            color: const Color(0xFF0D52A1),
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
           ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _refresh,
+            icon: const Icon(Icons.refresh, color: Color(0xFF0D52A1)),
+            onPressed: _loadNotifications,
             tooltip: 'Refresh',
           ),
         ],
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _notifFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              !snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF0D52A1)),
-            );
-          }
+      body: _buildBody(unreadCount),
+    );
+  }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline,
-                      size: 64, color: Colors.redAccent),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Gagal memuat notifikasi',
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
-                  ),
-                  TextButton(
-                    onPressed: _refresh,
-                    child: const Text('Coba Lagi'),
-                  ),
-                ],
-              ),
-            );
-          }
+  Widget _buildBody(int unreadCount) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF0D52A1)),
+      );
+    }
 
-          final notifications = snapshot.data ?? [];
-
-          if (notifications.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.notifications_none,
-                      size: 80, color: Colors.grey[300]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Belum ada notifikasi',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: Colors.grey[500],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Notifikasi pesanan dan top-up\nakan muncul di sini.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            color: const Color(0xFF0D52A1),
-            onRefresh: () async => _refresh(),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-              itemCount: notifications.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final notif = notifications[index];
-                return _NotifCard(notif: notif);
-              },
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              style: GoogleFonts.poppins(color: Colors.grey[700]),
             ),
-          );
-        },
+            const SizedBox(height: 12),
+            TextButton(onPressed: _loadNotifications, child: const Text('Coba Lagi')),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterTab('Semua', 'semua'),
+                      const SizedBox(width: 8),
+                      _buildFilterTab('Pesanan', 'order'),
+                      const SizedBox(width: 8),
+                      _buildFilterTab('Top Up', 'topup'),
+                      const SizedBox(width: 8),
+                      _buildFilterTab('Chat', 'chat'),
+                      const SizedBox(width: 8),
+                      _buildFilterTab('Voucher', 'voucher'),
+                    ],
+                  ),
+                ),
+              ),
+              if (unreadCount > 0) ...[
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: _markCurrentUserNotificationsAsRead,
+                  child: const Text(
+                    'Tandai Dibaca',
+                    style: TextStyle(
+                      color: Color(0xFF0D52A1),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        Expanded(
+          child: _filteredNotifications.isEmpty
+              ? _buildEmptyState()
+              : RefreshIndicator(
+                  color: const Color(0xFF0D52A1),
+                  onRefresh: _loadNotifications,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    itemCount: _filteredNotifications.length,
+                    itemBuilder: (context, index) {
+                      final item = _filteredNotifications[index];
+                      final notificationId = item['id'].toString();
+
+                      return Dismissible(
+                        key: Key(notificationId),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (_) async {
+                          await _deleteNotification(notificationId);
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Notifikasi dihapus'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.red[100],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                          ),
+                        ),
+                        child: _buildNotificationCard(item),
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterTab(String label, String value) {
+    final isActive = _activeFilter == value;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _activeFilter = value;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF0D52A1) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? const Color(0xFF0D52A1) : Colors.grey[200]!,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.white : Colors.grey[600],
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
-}
 
-// ─────────────────────────────────────────────────────────────
-// _NotifCard — single notification tile
-// ─────────────────────────────────────────────────────────────
-class _NotifCard extends StatelessWidget {
-  final Map<String, dynamic> notif;
-  const _NotifCard({required this.notif});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isRead = notif['is_read'] == true;
-    final String category = notif['category']?.toString() ?? 'order';
-    final String title = notif['title']?.toString() ?? '';
-    final String body = notif['body']?.toString() ?? '';
-    final String? createdAt = notif['created_at']?.toString();
+  Widget _buildNotificationCard(Map<String, dynamic> item) {
+    final isRead = item['is_read'] == true;
+    final category = item['category']?.toString() ?? 'order';
+    final title = item['title']?.toString() ?? '';
+    final body = item['body']?.toString() ?? '';
+    final createdAt = item['created_at']?.toString();
+    final categoryColor = _categoryColor(category);
 
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isRead ? Colors.white : const Color(0xFFEEF4FF),
-        borderRadius: BorderRadius.circular(14),
+        color: isRead ? Colors.white : const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isRead ? Colors.grey[100]! : const Color(0xFFBFDBFE),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.01),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
-        border: isRead
-            ? null
-            : Border.all(color: const Color(0xFF0D52A1).withValues(alpha: 0.2)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Icon kategori
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: _categoryColor(category).withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                _categoryIcon(category),
-                color: _categoryColor(category),
-                size: 22,
-              ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: categoryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 14),
-            // Konten
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: GoogleFonts.poppins(
-                            fontWeight:
-                                isRead ? FontWeight.w500 : FontWeight.w700,
-                            fontSize: 13.5,
-                            color: Colors.grey[850],
-                          ),
+            child: Icon(_categoryIcon(category), color: categoryColor, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight:
+                              isRead ? FontWeight.bold : FontWeight.w800,
+                          color: isRead
+                              ? Colors.black87
+                              : const Color(0xFF0F172A),
                         ),
                       ),
-                      if (!isRead)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF0D52A1),
-                            shape: BoxShape.circle,
-                          ),
+                    ),
+                    if (!isRead)
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF0D52A1),
+                          shape: BoxShape.circle,
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    body,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12.5,
-                      color: Colors.grey[600],
-                      height: 1.4,
-                    ),
-                  ),
-                  if (createdAt != null) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      _formatDate(createdAt),
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: Colors.grey[400],
                       ),
-                    ),
                   ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  body,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color:
+                        isRead ? Colors.grey[600] : const Color(0xFF334155),
+                    height: 1.4,
+                  ),
+                ),
+                if (createdAt != null && createdAt.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _formatDate(createdAt),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[400],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.notifications_off_outlined,
+              size: 64,
+              color: Colors.grey[300],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Tidak Ada Notifikasi',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[800],
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Semua pemberitahuan pesanan dan top up Anda bersih.',
+            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+          ),
+        ],
       ),
     );
   }
@@ -295,11 +457,11 @@ class _NotifCard extends StatelessWidget {
   Color _categoryColor(String category) {
     switch (category) {
       case 'topup':
-        return const Color(0xFF14A800);
+        return Colors.teal;
       case 'chat':
-        return const Color(0xFF7B5EA7);
+        return const Color(0xFF7C3AED);
       case 'voucher':
-        return const Color(0xFFF59E0B);
+        return Colors.orange[800]!;
       default:
         return const Color(0xFF0D52A1);
     }
@@ -307,15 +469,15 @@ class _NotifCard extends StatelessWidget {
 
   String _formatDate(String isoString) {
     try {
-      final dt = DateTime.parse(isoString).toLocal();
+      final dateTime = DateTime.parse(isoString).toLocal();
       final now = DateTime.now();
-      final diff = now.difference(dt);
+      final diff = now.difference(dateTime);
 
       if (diff.inMinutes < 1) return 'Baru saja';
       if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
       if (diff.inHours < 24) return '${diff.inHours} jam lalu';
       if (diff.inDays < 7) return '${diff.inDays} hari lalu';
-      return DateFormat('dd MMM yyyy, HH:mm', 'id').format(dt);
+      return DateFormat('dd MMM yyyy, HH:mm', 'id').format(dateTime);
     } catch (_) {
       return '';
     }

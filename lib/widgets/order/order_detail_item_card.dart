@@ -26,14 +26,22 @@ class OrderDetailItemCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
               color: AppColors.lightBlue,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: product.imageAsset.isNotEmpty
-                ? Image.asset(product.imageAsset, fit: BoxFit.contain)
+            clipBehavior: Clip.antiAlias,
+            child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                ? Image.network(
+                    product.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.local_drink,
+                      color: AppColors.primaryBlue,
+                    ),
+                  )
                 : const Icon(Icons.local_drink, color: AppColors.primaryBlue),
           ),
           const SizedBox(width: 12),
@@ -42,7 +50,7 @@ class OrderDetailItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product.brand,
+                  product.name,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -51,7 +59,7 @@ class OrderDetailItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$quantity x ${product.name}',
+                  'Jumlah: $quantity',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     color: AppColors.textGrey,

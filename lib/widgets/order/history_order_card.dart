@@ -26,8 +26,9 @@ class HistoryOrderCard extends StatelessWidget {
         order.status != OrderStatus.selesai &&
         order.status != OrderStatus.tolak;
 
-    // Mengecek apakah masih mencari kurir (untuk mematikan tombol)
-    final isMencariKurir = order.status == OrderStatus.mencariKurir;
+    // Mengecek apakah tombol chat dan lacak harus dikunci (hanya aktif jika statusnya diantar)
+    final isLocked = order.status == OrderStatus.mencariKurir ||
+        order.status == OrderStatus.menungguKurir;
 
     return Container(
       width: double.infinity,
@@ -105,7 +106,7 @@ class HistoryOrderCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: IconButton(
-                        onPressed: () => context.push('/orders/detail',extra: order),
+                        onPressed: () => context.push('/orders/detail', extra: order),
                         icon: const Icon(
                           Icons.receipt_long_outlined,
                           color: AppColors.primaryBlue,
@@ -114,17 +115,17 @@ class HistoryOrderCard extends StatelessWidget {
                         tooltip: "Detail Pesanan",
                       ),
                     ),
-                    // Tombol Chat (Mati kalau kurir belum ada)
+                    // Tombol Chat (Mati kalau kurir belum ada / masih menunggu)
                     Container(
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
-                        color: isMencariKurir
+                        color: isLocked
                             ? Colors.grey[200]
                             : AppColors.lightBlue,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: IconButton(
-                        onPressed: isMencariKurir
+                        onPressed: isLocked
                             ? null
                             : () {
                                 final chatRoom = ChatModel(
@@ -145,7 +146,7 @@ class HistoryOrderCard extends StatelessWidget {
                               },
                         icon: Icon(
                           Icons.chat_outlined,
-                          color: isMencariKurir
+                          color: isLocked
                               ? Colors.grey
                               : AppColors.primaryBlue,
                           size: 20,
@@ -153,10 +154,10 @@ class HistoryOrderCard extends StatelessWidget {
                         tooltip: "Chat Kurir",
                       ),
                     ),
-                    // Tombol Lacak (Mati kalau kurir belum ada)
+                    // Tombol Lacak (Mati kalau kurir belum ada / masih menunggu)
                     ElevatedButton(
-                      // 👇 Beri nilai null kalau masih mencari kurir
-                      onPressed: isMencariKurir
+                      // 👇 Beri nilai null kalau masih mencari kurir / menunggu kurir
+                      onPressed: isLocked
                           ? null
                           : () {
                               context.push('/track-order', extra: order);

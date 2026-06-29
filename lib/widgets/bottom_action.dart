@@ -5,17 +5,18 @@ import '../core/constants/app_colors.dart';
 class BottomActionButton extends StatelessWidget {
   final String label;
   final IconData? icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   const BottomActionButton({
     super.key,
     required this.label,
     this.icon,
-    required this.onPressed,
+    this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -32,8 +33,10 @@ class BottomActionButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.darkBlue,
+            backgroundColor: isEnabled ? AppColors.darkBlue : Colors.grey.shade300,
+            foregroundColor: isEnabled ? Colors.white : Colors.grey.shade500,
             padding: const EdgeInsets.symmetric(vertical: 20),
+            elevation: isEnabled ? 2 : 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -45,12 +48,16 @@ class BottomActionButton extends StatelessWidget {
                 label,
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: isEnabled ? Colors.white : Colors.grey.shade600,
                 ),
               ),
               if (icon != null) ...[
                 const SizedBox(width: 8),
-                Icon(icon, size: 18, color: Colors.white),
+                Icon(
+                  icon,
+                  size: 18,
+                  color: isEnabled ? Colors.white : Colors.grey.shade500,
+                ),
               ],
             ],
           ),

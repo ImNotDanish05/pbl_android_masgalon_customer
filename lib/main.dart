@@ -1,4 +1,4 @@
-import 'package:firebase_core/firebase_core.dart';
+﻿import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,24 +8,17 @@ import 'services/supabase_client.dart';
 import 'providers/auth_provider.dart';
 import 'route/routes.dart';
 import 'services/notification/notification_service.dart';
+import 'firebase_options.dart';
 
-// GlobalKey untuk navigasi dari luar widget tree (notification tap routing)
 final navigatorKey = GlobalKey<NavigatorState>();
-
-// ─────────────────────────────────────────────────────────────
-// Required keys that MUST be present in .env
-// ─────────────────────────────────────────────────────────────
 const _requiredEnvKeys = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ── 1. Try to load .env ──────────────────────────────────
   String? envError;
   try {
     await dotenv.load(fileName: '.env');
-
-    // ── 2. Validate required keys are not empty ────────────
     for (final key in _requiredEnvKeys) {
       final value = dotenv.env[key];
       if (value == null || value.trim().isEmpty) {
@@ -47,35 +40,29 @@ void main() async {
         'Lalu jalankan ulang aplikasi.';
   }
 
-  // ── 3. If .env is broken → show error app, stop here ────
   if (envError != null) {
     runApp(_EnvErrorApp(message: envError!));
     return;
   }
 
-  // ── 4. Init Supabase ────────────────────────────────────
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
-  // ── 5. Init Firebase & Notification Service ────────────
-  // CATATAN: Memerlukan file google-services.json di android/app/
-  // Jika belum ada, baris ini akan throw error saat startup.
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     await NotificationService.init(navigatorKey);
-  } catch (e) {
-    debugPrint('⚠️ Firebase belum dikonfigurasi: $e');
-    // App tetap berjalan tanpa notifikasi jika Firebase belum di-setup
+  } catch (e, st) {
+    debugPrint('? Firebase/Notification init gagal: $e');
+    debugPrint('$st');
   }
 
   runApp(const ProviderScope(child: MyApp()));
 }
 
-// ─────────────────────────────────────────────────────────────
-// Error app shown when .env is missing or incomplete
-// ─────────────────────────────────────────────────────────────
 class _EnvErrorApp extends StatelessWidget {
   final String message;
   const _EnvErrorApp({required this.message});
@@ -163,9 +150,6 @@ class _EnvErrorApp extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Main app (only reached when .env is valid)
-// ─────────────────────────────────────────────────────────────
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -179,72 +163,6 @@ class MyApp extends StatelessWidget {
         textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
       ),
       routerConfig: AppRouter.router,
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// Startup: session check lives in GoRouter redirect (see routes.dart)
-// This splash widget is shown at /startup before the redirect fires
-// ─────────────────────────────────────────────────────────────
-class StartupPage extends ConsumerStatefulWidget {
-  const StartupPage({super.key});
-
-  @override
-  ConsumerState<StartupPage> createState() => StartupPageState();
-}
-
-class StartupPageState extends ConsumerState<StartupPage> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkSession();
-    });
-  }
-
-  Future<void> _checkSession() async {
-    final session = supabase.auth.currentSession;
-
-    if (session == null) {
-      _goToLogin();
-      return;
-    }
-
-    try {
-      // Restore ke provider using notifier
-      await ref.read(authCustomerProvider.notifier).restoreSession(session);
-
-      final restoredCustomer = ref.read(authCustomerProvider);
-      if (restoredCustomer == null) {
-        _goToLogin();
-        return;
-      }
-
-      debugPrint('========================================');
-      debugPrint('🔄 SESSION RESTORED');
-      debugPrint('ID       : ${restoredCustomer.id}');
-      debugPrint('Email    : ${restoredCustomer.email}');
-      debugPrint('Username : ${restoredCustomer.username}');
-      debugPrint('Saldo    : ${restoredCustomer.saldoAbunemen}');
-      debugPrint('========================================');
-
-      if (!mounted) return;
-      AppRouter.router.go('/home');
-    } catch (_) {
-      _goToLogin();
-    }
-  }
-
-  void _goToLogin() {
-    if (!mounted) return;
-    AppRouter.router.go('/login');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator(color: Color(0xFF0D52A1))),
     );
   }
 }

@@ -187,34 +187,43 @@ class KurirCard extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(50), // Efek klik bulat
-              onTap: () {
-                // 👇 1. Ambil data dari variabel yang sudah ada di KurirCard
-                final chatRoom = ChatModel(
-                  id: detailData['id'].toString(), // Ambil ID dari detailData
-                  kurirName: driverName,           // driverName sudah dideklarasikan di atasnya
-                  kurirAvatar: avatarUrl,          // avatarUrl juga sudah ada di atasnya
-                  lastMessage: '',
-                  time: '',
-                  isOnline: true,
-                );
+              onTap: (detailData['status']?.toString() == 'Mencari_Kurir' ||
+                      detailData['status']?.toString() == 'Menunggu_Kurir')
+                  ? null
+                  : () {
+                      // 👇 1. Ambil data dari variabel yang sudah ada di KurirCard
+                      final chatRoom = ChatModel(
+                        id: detailData['id'].toString(), // Ambil ID dari detailData
+                        kurirName: driverName,           // driverName sudah dideklarasikan di atasnya
+                        kurirAvatar: avatarUrl,          // avatarUrl juga sudah ada di atasnya
+                        lastMessage: '',
+                        time: '',
+                        isOnline: true,
+                      );
 
-                // 👇 2. Pindah ke halaman chat
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChatDetailPage(chat: chatRoom),
-                  ),
-                );
-              },
+                      // 👇 2. Pindah ke halaman chat
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatDetailPage(chat: chatRoom),
+                        ),
+                      );
+                    },
               child: Container(
                 padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: AppColors.lightBlue,
+                decoration: BoxDecoration(
+                  color: (detailData['status']?.toString() == 'Mencari_Kurir' ||
+                          detailData['status']?.toString() == 'Menunggu_Kurir')
+                      ? Colors.grey.shade100
+                      : AppColors.lightBlue,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.chat_outlined, // Boleh pakai chat_outlined juga
-                  color: AppColors.primaryBlue, // Sesuaikan warna dengan tema aplikasimu
+                  color: (detailData['status']?.toString() == 'Mencari_Kurir' ||
+                          detailData['status']?.toString() == 'Menunggu_Kurir')
+                      ? Colors.grey.shade400
+                      : AppColors.primaryBlue, // Sesuaikan warna dengan tema aplikasimu
                   size: 20,
                 ),
               ),

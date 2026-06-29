@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:pbl_android_masgalon_customer/models/order_model.dart';
-import '../main.dart';
+import '../pages/startup/startup_page.dart';
 
 import '../pages/auth/login_page.dart';
 import '../pages/auth/registrasi.dart';
