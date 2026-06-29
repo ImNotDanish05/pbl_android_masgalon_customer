@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class EstimateCard extends StatelessWidget {
   final Map<String, dynamic> detailData; // 👈 Tambahkan penangkap data
+  final LatLng? courierLocation;
+  final LatLng? targetLocation;
 
-  const EstimateCard({super.key, required this.detailData});
+  const EstimateCard({
+    super.key,
+    required this.detailData,
+    this.courierLocation,
+    this.targetLocation,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,8 +23,28 @@ class EstimateCard extends StatelessWidget {
     String estimasiJarak = '-';
 
     if (status == 'Diantar') {
-      estimasiWaktu = '15 - 20 Menit'; // Angka perkiraan statis
-      estimasiJarak = '± 2.5 KM';
+      if (courierLocation != null && targetLocation != null) {
+        final double distanceInMeters =
+            const Distance().distance(courierLocation!, targetLocation!);
+
+        if (distanceInMeters < 1000) {
+          estimasiJarak = '± ${distanceInMeters.round()} m';
+        } else {
+          estimasiJarak =
+              '± ${(distanceInMeters / 1000).toStringAsFixed(1)} KM';
+        }
+
+        // Estimasi waktu: asumsi kecepatan rata-rata motor di pemukiman 24km/jam (~400 meter per menit)
+        final int minutes = (distanceInMeters / 400).round();
+        if (minutes < 1) {
+          estimasiWaktu = 'Hampir Sampai';
+        } else {
+          estimasiWaktu = '$minutes - ${minutes + 2} Menit';
+        }
+      } else {
+        estimasiWaktu = 'Sedang Jalan';
+        estimasiJarak = '-';
+      }
     } else if (status == 'Selesai') {
       estimasiWaktu = 'Telah Tiba';
       estimasiJarak = '0 KM';

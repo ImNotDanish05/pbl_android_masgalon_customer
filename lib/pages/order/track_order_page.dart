@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -22,20 +23,44 @@ class TrackOrderPage extends StatefulWidget {
 
 class _TrackOrderPageState extends State<TrackOrderPage> {
   final _orderService = OrderService();
-  late Future<Map<String, dynamic>> _orderDetailFuture;
+  late Stream<Map<String, dynamic>> _orderDetailStream;
+  LatLng? _courierLocation;
+  StreamSubscription<LatLng>? _courierLocationSubscription;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _orderDetailStream = _orderService.streamOrderDetail(widget.order.id);
+    _setupLocationTracking();
   }
 
-  void _loadData() {
-    setState(() {
-      _orderDetailFuture = _orderService.getOrderDetail(widget.order.id);
+  void _setupLocationTracking() {
+    // 1. Ambil lokasi terakhir dari tracking_logs (jika sudah ada)
+    _orderService.fetchLatestCourierLocation(widget.order.id).then((loc) {
+      if (loc != null && mounted) {
+        setState(() {
+          _courierLocation = loc;
+        });
+      }
+    });
+
+    // 2. Dengar stream koordinat kurir secara real-time
+    _courierLocationSubscription = _orderService
+        .streamCourierLocation(widget.order.id)
+        .listen((loc) {
+      if (mounted) {
+        setState(() {
+          _courierLocation = loc;
+        });
+      }
     });
   }
 
+  @override
+  void dispose() {
+    _courierLocationSubscription?.cancel();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,17 +97,19 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
 
       ),
 
-      // 👇 2. MENARIK DATA KOORDINAT DARI DATABASE
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _orderDetailFuture,
+      // 👇 2. MENARIK DATA KOORDINAT DARI DATABASE SECARA REAL-TIME
+      body: StreamBuilder<Map<String, dynamic>>(
+        stream: _orderDetailStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError && !snapshot.hasData) {
             return Center(child: Text('Gagal memuat peta: ${snapshot.error}'));
           }
-          if ((!snapshot.hasData || snapshot.data == null) && !snapshot.hasData) {
+          if ((!snapshot.hasData || snapshot.data == null) &&
+              !snapshot.hasData) {
             return const Center(child: Text('Data tidak ditemukan'));
           }
 
@@ -90,8 +117,10 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
 
           // Ambil titik Latitude & Longitude dari Database
           // Jika kosong, sistem otomatis mengarahkan ke koordinat cadangan (titik tengah Tembalang, Semarang)
-          final lat = (detailData['address_lat'] as num?)?.toDouble() ?? -7.0493;
-          final lng = (detailData['address_long'] as num?)?.toDouble() ?? 110.4208;
+          final lat =
+              (detailData['address_lat'] as num?)?.toDouble() ?? -7.0493;
+          final lng =
+              (detailData['address_long'] as num?)?.toDouble() ?? 110.4208;
           final targetLocation = LatLng(lat, lng);
 
           return Stack(
@@ -104,9 +133,20 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.masgalon.app',
                   ),
+                  if (_courierLocation != null)
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: [_courierLocation!, targetLocation],
+                          color: AppColors.primaryBlue.withOpacity(0.8),
+                          strokeWidth: 4.0,
+                        ),
+                      ],
+                    ),
                   MarkerLayer(
                     markers: [
                       Marker(
@@ -119,6 +159,34 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
                           size: 40,
                         ),
                       ),
+                      if (_courierLocation != null)
+                        Marker(
+                          point: _courierLocation!,
+                          width: 40,
+                          height: 40,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: AppColors.primaryBlue,
+                                width: 2,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.motorcycle,
+                              color: AppColors.primaryBlue,
+                              size: 24,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ],
@@ -129,7 +197,11 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
                 child: Align(
                   alignment: Alignment.topCenter,
                   // Nanti lempar detailData ke dalam sini: EstimateCard(detailData: detailData)
-                  child: EstimateCard(detailData:detailData), 
+                  child: EstimateCard(
+                    detailData: detailData,
+                    courierLocation: _courierLocation,
+                    targetLocation: targetLocation,
+                  ),
                 ),
               ),
 
@@ -137,7 +209,8 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
               Align(
                 alignment: Alignment.bottomCenter,
                 // Nanti lempar detailData ke dalam sini: DriverInfoSheet(detailData: detailData)
-                child: DriverInfoSheet(detailData: detailData, order: widget.order), 
+                child: DriverInfoSheet(
+                    detailData: detailData, order: widget.order),
               ),
             ],
           );

@@ -101,33 +101,12 @@ class DriverInfoSheet extends StatelessWidget {
                         color: AppColors.textDark,
                       ),
                     ),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star,
-                          color: isKurirAda ? Colors.orange : Colors.grey,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isKurirAda ? '4.9' : '-', // Rating statis sementara
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isKurirAda ? Colors.orange : Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text('•', style: TextStyle(color: AppColors.textGrey)),
-                        const SizedBox(width: 8),
-                        Text(
-                          isKurirAda ? 'Kurir Mas Galon' : 'Sistem',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: AppColors.textGrey,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      isKurirAda ? 'Kurir Mas Galon' : 'Sistem',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppColors.textGrey,
+                      ),
                     ),
                   ],
                 ),

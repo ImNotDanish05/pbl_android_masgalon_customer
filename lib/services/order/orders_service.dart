@@ -1,6 +1,8 @@
 // lib/services/order_service.dart
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 class OrderService {
   final _supabase = Supabase.instance.client;
@@ -153,5 +155,105 @@ class OrderService {
       debugPrint('Error getOrderDetail: $e');
       rethrow;
     }
+  }
+
+  /// Listen to real-time changes in courier coordinates for a specific order.
+  /// Returns a stream of LatLng for updates.
+  Stream<LatLng> streamCourierLocation(String orderId) {
+    late final RealtimeChannel channel;
+    final controller = StreamController<LatLng>(
+      onCancel: () {
+        _supabase.removeChannel(channel);
+      },
+    );
+
+    channel = _supabase.channel('tracking_logs_order_$orderId');
+    channel.onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'tracking_logs',
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'order_id',
+        value: orderId,
+      ),
+      callback: (payload) {
+        final double lat =
+            double.tryParse(payload.newRecord['lat'].toString()) ?? 0.0;
+        final double lng =
+            double.tryParse(payload.newRecord['long'].toString()) ?? 0.0;
+        controller.add(LatLng(lat, lng));
+      },
+    ).subscribe();
+
+    return controller.stream;
+  }
+
+  /// Fetch the latest location log for an order
+  Future<LatLng?> fetchLatestCourierLocation(String orderId) async {
+    try {
+      final response = await _supabase
+          .from('tracking_logs')
+          .select('lat, long')
+          .eq('order_id', orderId)
+          .order('logged_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (response != null) {
+        final double lat = double.tryParse(response['lat'].toString()) ?? 0.0;
+        final double lng = double.tryParse(response['long'].toString()) ?? 0.0;
+        return LatLng(lat, lng);
+      }
+    } catch (_) {
+      // Fail silently
+    }
+    return null;
+  }
+
+  /// Listen to real-time updates for a specific order, pushing full order details
+  Stream<Map<String, dynamic>> streamOrderDetail(String orderId) {
+    late final RealtimeChannel channel;
+    final controller = StreamController<Map<String, dynamic>>(
+      onCancel: () {
+        _supabase.removeChannel(channel);
+      },
+    );
+
+    // Initial load
+    getOrderDetail(orderId).then((data) {
+      if (!controller.isClosed) {
+        controller.add(data);
+      }
+    }).catchError((e) {
+      if (!controller.isClosed) {
+        controller.addError(e);
+      }
+    });
+
+    // Subscribe to Postgres changes on the orders table
+    channel = _supabase.channel('order_detail_updates_$orderId');
+    channel.onPostgresChanges(
+      event: PostgresChangeEvent.update,
+      schema: 'public',
+      table: 'orders',
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'id',
+        value: orderId,
+      ),
+      callback: (payload) async {
+        try {
+          final data = await getOrderDetail(orderId);
+          if (!controller.isClosed) {
+            controller.add(data);
+          }
+        } catch (_) {
+          // Fail silently
+        }
+      },
+    ).subscribe();
+
+    return controller.stream;
   }
 }
